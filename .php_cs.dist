@@ -1,0 +1,31 @@
+<?php
+
+return PhpCsFixer\Config::create()
+    ->setRules([
+        '@PSR2' => true,
+        '@PHP71Migration' => true,
+        '@PHP71Migration:risky' => true,
+        '@DoctrineAnnotation' => true,
+        'array_syntax' => ['syntax' => 'short'],
+        'no_unused_imports' => true,
+    ])
+    ->setRiskyAllowed(true)
+    ->setFinder(
+        PhpCsFixer\Finder::create()
+            ->in([
+                __DIR__.'/src',
+                __DIR__.'/tests',
+            ])
+            ->exclude([
+                'Fixtures/App/var',
+                'Fixtures/App/config'
+            ])
+            ->notPath([
+                'Fixtures/App/src/Kernel.php',
+                'Fixtures/App/public/index.php',
+                'Fixtures/App/bin/console',
+                'Fixtures/App/config/bootstrap.php',
+                'Fixtures/App/config/bundles.php',
+            ])
+    )
+;

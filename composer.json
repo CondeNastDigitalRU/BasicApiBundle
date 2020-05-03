@@ -1,0 +1,95 @@
+{
+    "name": "condenast/basic-api-bundle",
+    "description": "Basic API bundle",
+    "keywords": ["API", "JSON"],
+    "type": "symfony-bundle",
+    "require": {
+        "php": "^7.2",
+        "doctrine/annotations": "^1.5",
+        "phpdocumentor/reflection-docblock": "^5",
+        "symfony/config": "^5",
+        "symfony/dependency-injection": "^5",
+        "symfony/error-handler": "^5",
+        "symfony/event-dispatcher": "^5",
+        "symfony/framework-bundle": "^5",
+        "symfony/http-foundation": "^5",
+        "symfony/http-kernel": "^5",
+        "symfony/property-access": "^5",
+        "symfony/property-info": "^5",
+        "symfony/serializer": "^5",
+        "symfony/validator": "^5"
+    },
+    "require-dev": {
+        "ext-json": "*",
+        "dg/bypass-finals": "^1.1",
+        "doctrine/cache": "^1.7",
+        "friendsofphp/php-cs-fixer": "^2.15",
+        "nelmio/api-doc-bundle": "^3",
+        "phpstan/phpstan": "^0.12.19",
+        "phpstan/phpstan-deprecation-rules": "^0.12.2",
+        "ramsey/uuid": "^3|^4",
+        "symfony/asset": "^5",
+        "symfony/browser-kit": "^5.0",
+        "symfony/console": "^5",
+        "symfony/dotenv": "^5",
+        "symfony/phpunit-bridge": "^5.0",
+        "symfony/routing": "^5",
+        "symfony/twig-bundle": "^5",
+        "symfony/yaml": "^5"
+    },
+    "suggest": {
+        "nelmio/api-doc-bundle": "To generate API documentation",
+        "ramsey/uuid": "To deal with UUIDs"
+    },
+    "conflict": {
+        "phpdocumentor/type-resolver": "1.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Condenast\\BasicApiBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Condenast\\BasicApiBundle\\Tests\\Fixtures\\App\\": "tests/Fixtures/App/src/",
+            "Condenast\\BasicApiBundle\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "bootstrap": [
+            "@putenv APP_PATH=tests/Fixtures/App"
+        ],
+        "bootstrap-dev": [
+            "@putenv APP_ENV=dev",
+            "@bootstrap"
+        ],
+        "bootstrap-test": [
+            "@putenv APP_ENV=test",
+            "@putenv COMPOSER_MEMORY_LIMIT=-1",
+            "@bootstrap"
+        ],
+        "php-cs-fixer": "php-cs-fixer fix --dry-run --verbose --diff",
+        "phpstan": "phpstan analyse --configuration phpstan.neon --level=max --no-progress src",
+        "phpunit": [
+            "@bootstrap-test",
+            "${APP_PATH}/bin/console cache:clear",
+            "simple-phpunit --coverage-text --colors=never"
+        ],
+        "server": [
+            "@bootstrap-dev",
+            "Composer\\Config::disableProcessTimeout",
+            "symfony server:stop --dir=${APP_PATH}",
+            "${APP_PATH}/bin/console cache:clear",
+            "${APP_PATH}/bin/console assets:install",
+            "symfony server:start --dir=${APP_PATH} --port=8080 --no-tls"
+        ],
+        "tests": [
+            "@phpunit",
+            "@php-cs-fixer",
+            "@phpstan"
+        ]
+    }
+}

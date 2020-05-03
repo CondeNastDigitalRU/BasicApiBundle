@@ -1,0 +1,55 @@
+services:
+  Condenast\BasicApiBundle\Controller\ErrorController:
+    public: true
+    arguments:
+      $debug: '%kernel.debug%'
+
+  Condenast\BasicApiBundle\EventListener\ErrorSubscriber:
+    arguments:
+      $errorListener: '@basic_api.error_listener'
+    tags:
+      - { name: kernel.event_subscriber }
+
+  Condenast\BasicApiBundle\EventListener\FormatSubscriber:
+    tags:
+      - { name: kernel.event_subscriber }
+
+  Condenast\BasicApiBundle\EventListener\RequestDeserializationSubscriber:
+    arguments:
+      $serializer: '@basic_api.serializer'
+    tags:
+      - { name: kernel.event_subscriber }
+
+  Condenast\BasicApiBundle\EventListener\RequestValidationSubscriber:
+    arguments:
+      $validator: '@basic_api.validator'
+    tags:
+      - { name: kernel.event_subscriber }
+
+  Condenast\BasicApiBundle\EventListener\ResponseSerializationSubscriber:
+    arguments:
+      $serializer: '@basic_api.serializer'
+    tags:
+      - { name: kernel.event_subscriber }
+
+  Condenast\BasicApiBundle\EventListener\RequestAttributesSubscriber:
+    arguments:
+      $annotationsReader: '@basic_api.annotations_reader'
+    tags:
+      - { name: kernel.event_subscriber }
+
+  basic_api.error_listener:
+    class: Symfony\Component\HttpKernel\EventListener\ErrorListener
+    arguments:
+      - 'Condenast\BasicApiBundle\Controller\ErrorController'
+      - '@logger'
+      - '%kernel.debug%'
+
+  basic_api.serializer:
+    alias: 'serializer'
+
+  basic_api.validator:
+    alias: 'validator'
+
+  basic_api.annotations_reader:
+    alias: 'annotations.reader'
