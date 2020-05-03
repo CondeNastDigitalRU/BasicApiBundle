@@ -1,5 +1,5 @@
 {
-    "name": "condenast/basic-api-bundle",
+    "name": "condenast-ru/basic-api-bundle",
     "description": "Basic API bundle",
     "keywords": ["API", "JSON"],
     "type": "symfony-bundle",
