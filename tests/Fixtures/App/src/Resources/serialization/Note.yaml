@@ -1,0 +1,5 @@
+Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Note:
+    attributes:
+        text:
+            groups:
+                - note.detail

@@ -1,0 +1,10 @@
+Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Tag:
+    properties:
+        name:
+            - NotBlank:
+                groups:
+                    - article.update
+        slug:
+            - NotBlank:
+                  groups:
+                      - article.update

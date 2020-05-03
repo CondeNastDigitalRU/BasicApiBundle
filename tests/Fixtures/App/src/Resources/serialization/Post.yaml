@@ -1,0 +1,19 @@
+Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Post:
+    attributes:
+        id:
+            groups:
+                - article.detail
+                - article.list
+                - article.write
+                - note.detail
+        title:
+            groups:
+                - article.detail
+                - article.list
+                - article.write
+                - note.detail
+        views:
+            groups:
+                - article.detail
+                - article.list
+                - note.detail

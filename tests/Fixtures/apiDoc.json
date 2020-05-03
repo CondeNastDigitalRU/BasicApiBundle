@@ -1,0 +1,470 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "",
+    "version": "0.0.0"
+  },
+  "paths": {
+    "/api/notes/{id}": {
+      "get": {
+        "summary": "Get note",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "\\d+"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Note"
+            }
+          }
+        },
+        "tags": [
+          "Note"
+        ]
+      }
+    },
+    "/api/articles/{id}": {
+      "get": {
+        "summary": "Get article",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "\\d+"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Article"
+            }
+          }
+        },
+        "tags": [
+          "Article"
+        ]
+      }
+    },
+    "/api/articles": {
+      "get": {
+        "summary": "Get articles",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/Article2"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "tags": [
+          "Article"
+        ]
+      },
+      "post": {
+        "summary": "Create article",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Article3"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/Article"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ConstraintViolationListInterface"
+            }
+          }
+        },
+        "tags": [
+          "Article"
+        ]
+      }
+    },
+    "/api/articles/batch": {
+      "post": {
+        "summary": "Create articles",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "",
+            "in": "body",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/Article3"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/Article"
+              },
+              "type": "array"
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/ConstraintViolationListInterface"
+            }
+          }
+        },
+        "tags": [
+          "Article"
+        ]
+      }
+    },
+    "/api/exception": {
+      "get": {
+        "summary": "Throw exception",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Exception"
+        ]
+      }
+    },
+    "/api/http_exception": {
+      "get": {
+        "summary": "Throw http exception",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Exception"
+        ]
+      }
+    },
+    "/api/not_json": {
+      "get": {
+        "summary": "Not json response",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Not JSON"
+        ]
+      }
+    },
+    "/api/empty_api": {
+      "get": {
+        "summary": "Empty api response",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "tags": [
+          "Emtpty api"
+        ]
+      }
+    },
+    "/api/null": {
+      "get": {
+        "summary": "Null response",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "tags": [
+          "Null"
+        ]
+      }
+    },
+    "/api/void": {
+      "get": {
+        "summary": "Void response",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "tags": [
+          "Void"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "Note": {
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/definitions/UuidInterface"
+        },
+        "title": {
+          "type": "string"
+        },
+        "views": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "Article": {
+      "properties": {
+        "headline": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "$ref": "#/definitions/Tag"
+          },
+          "type": "array"
+        },
+        "id": {
+          "$ref": "#/definitions/UuidInterface2"
+        },
+        "title": {
+          "type": "string"
+        },
+        "views": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "Article2": {
+      "properties": {
+        "headline": {
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/definitions/UuidInterface3"
+        },
+        "title": {
+          "type": "string"
+        },
+        "views": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "Article3": {
+      "properties": {
+        "headline": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "$ref": "#/definitions/Tag2"
+          },
+          "type": "array"
+        },
+        "id": {
+          "$ref": "#/definitions/UuidInterface4"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ConstraintViolationListInterface": {
+      "required": [
+        "type",
+        "title",
+        "violations"
+      ],
+      "properties": {
+        "type": {
+          "description": "A URI reference that identifies the problem type",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short, human-readable summary of the problem type",
+          "type": "string"
+        },
+        "status": {
+          "description": "The HTTP status code generated by the origin server for this occurrence of the problem",
+          "type": "integer"
+        },
+        "detail": {
+          "description": "A human-readable explanation specific to this occurrence of the problem",
+          "type": "string"
+        },
+        "instance": {
+          "description": "A URI reference that identifies the specific occurrence of the problem",
+          "type": "string"
+        },
+        "violations": {
+          "description": "Array of constraint violations",
+          "items": {
+            "required": [
+              "propertyPath",
+              "title",
+              "parameters"
+            ],
+            "properties": {
+              "propertyPath": {
+                "description": "The path to a property whose value violates the constraint",
+                "type": "string"
+              },
+              "title": {
+                "description": "Constraint violation message",
+                "type": "string"
+              },
+              "parameters": {
+                "description": "Constraint violation message parameters",
+                "type": "string"
+              },
+              "type": {
+                "description": "Constraint type",
+                "type": "string"
+              }
+            }
+          },
+          "type": "array"
+        }
+      }
+    },
+    "UuidInterface": {
+      "example": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    "Tag": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "UuidInterface2": {
+      "example": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    "UuidInterface3": {
+      "example": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    "Tag2": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "UuidInterface4": {
+      "example": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    }
+  },
+  "host": "localhost"
+}

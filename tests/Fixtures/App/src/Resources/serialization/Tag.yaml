@@ -1,0 +1,10 @@
+Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Tag:
+    attributes:
+        name:
+            groups:
+                - article.detail
+                - article.write
+        slug:
+            groups:
+                - article.detail
+                - article.write

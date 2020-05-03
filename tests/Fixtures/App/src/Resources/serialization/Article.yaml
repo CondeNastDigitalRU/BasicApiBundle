@@ -1,0 +1,15 @@
+Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article:
+    attributes:
+        headline:
+            groups:
+                - article.detail
+                - article.list
+                - article.write
+        content:
+            groups:
+                - article.detail
+                - article.write
+        tags:
+            groups:
+                - article.detail
+                - article.write

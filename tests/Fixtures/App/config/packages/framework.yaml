@@ -1,0 +1,15 @@
+framework:
+    test: true
+    secret: '%env(APP_SECRET)%'
+    session:
+        storage_id: session.storage.mock_file
+    serializer:
+        mapping:
+            paths:
+                - '%kernel.project_dir%/src/Resources/serialization/'
+    validation:
+        mapping:
+            paths:
+                - '%kernel.project_dir%/src/Resources/validation/'
+    annotations:
+        cache: file
