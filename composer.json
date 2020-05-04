@@ -1,8 +1,15 @@
 {
     "name": "condenast-ru/basic-api-bundle",
     "description": "Basic API bundle",
-    "keywords": ["API", "JSON"],
     "type": "symfony-bundle",
+    "keywords": ["API", "JSON"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Zhurin Vasiliy",
+            "email": "vzhurin@condenast.ru"
+        }
+    ],
     "require": {
         "php": "^7.2",
         "doctrine/annotations": "^1.5",
