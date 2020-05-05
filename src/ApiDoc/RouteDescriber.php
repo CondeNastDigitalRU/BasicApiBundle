@@ -66,7 +66,7 @@ final class RouteDescriber implements RouteDescriberInterface, ModelRegistryAwar
     private function describeRequest(Operation $operation, Request $requestAnnotation): void
     {
         $this->describeModel(
-            $operation->getParameters()->get('', 'body')->getSchema(),
+            $operation->getParameters()->get('body', 'body')->getSchema(),
             $requestAnnotation->getType(),
             (array) ($requestAnnotation->getContext()['groups'] ?? [])
         );
