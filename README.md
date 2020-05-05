@@ -12,7 +12,7 @@ Tasks solved by this bundle:
 
 ## Installation
 ```shell script
-composer require condenast/basic-api-bundle
+composer require condenast-ru/basic-api-bundle
 ```
 
 Then bundle should be enabled in `bundles.php` file.
