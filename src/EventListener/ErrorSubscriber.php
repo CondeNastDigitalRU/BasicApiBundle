@@ -2,13 +2,14 @@
 
 namespace Condenast\BasicApiBundle\EventListener;
 
-use Condenast\BasicApiBundle\Request\RequestHelper;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\EventListener\ErrorListener;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 class ErrorSubscriber implements ApiEventSubscriberInterface
 {
+    use ApiEventSubscriberTrait;
+
     /** @var ErrorListener */
     private $errorListener;
 
@@ -28,12 +29,11 @@ class ErrorSubscriber implements ApiEventSubscriberInterface
     {
         $request = $event->getRequest();
 
-        if (!RequestHelper::isApiRequest($request)) {
+        if (!$this->isApiRequest($request)) {
             return;
         }
 
-        RequestHelper::resetResponseSerializationContext($request);
-
+        $this->resetResponseSerializationContext($request);
         $this->errorListener->onKernelException($event);
     }
 }

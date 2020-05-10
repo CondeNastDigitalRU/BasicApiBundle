@@ -2,8 +2,6 @@
 
 namespace Condenast\BasicApiBundle\Annotation;
 
-use Doctrine\Common\Annotations\Annotation\Target;
-
 /**
  * @Annotation
  * @Target("METHOD")

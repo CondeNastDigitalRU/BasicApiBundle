@@ -13,13 +13,13 @@ class RamseyUuidModelDescriber implements ModelDescriberInterface
     {
         $schema
             ->setType('string')
+            ->setFormat('uuid')
             ->setExample('00000000-0000-0000-0000-000000000000');
     }
 
     public function supports(Model $model): bool
     {
         $className = $model->getType()->getClassName();
-
         return null !== $className && \is_a($className, UuidInterface::class, true);
     }
 }

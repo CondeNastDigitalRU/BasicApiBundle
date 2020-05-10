@@ -2,13 +2,14 @@
 
 namespace Condenast\BasicApiBundle\EventListener;
 
-use Condenast\BasicApiBundle\Request\RequestHelper;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 class FormatSubscriber implements ApiEventSubscriberInterface
 {
+    use ApiEventSubscriberTrait;
+
     public static function getSubscribedEvents(): array
     {
         return [
@@ -21,10 +22,10 @@ class FormatSubscriber implements ApiEventSubscriberInterface
         $request = $event->getRequest();
 
         if (
-            !RequestHelper::isApiRequest($request)
-            || !RequestHelper::canRequestHaveBody($request)
-            || $request->getContent() === ''
-            || RequestHelper::isJsonContentTypeRequest($request)
+            !$this->isApiRequest($request)
+            || !$this->canRequestHaveBody($request)
+            || '' === $request->getContent()
+            || $this->isJsonContentTypeRequest($request)
         ) {
             return;
         }

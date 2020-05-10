@@ -4,8 +4,9 @@
 >
     <php>
         <env name="APP_ENV" value="test" force="true" />
-        <env name="KERNEL_CLASS" value="Condenast\BasicApiBundle\Tests\Fixtures\App\Kernel"/>
+        <env name="KERNEL_CLASS" value="Condenast\BasicApiBundle\Tests\Fixtures\App\Kernel" />
         <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[total]=2" />
+        <env name="SHELL_VERBOSITY" value="-1" />
     </php>
     <testsuites>
         <testsuite name="Functional">
@@ -21,6 +22,6 @@
         </whitelist>
     </filter>
     <logging>
-        <log type="coverage-text" target="php://stdout"/>
+        <log type="coverage-text" target="php://stdout" />
     </logging>
 </phpunit>

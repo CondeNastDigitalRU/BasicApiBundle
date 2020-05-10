@@ -8,6 +8,7 @@ Tasks solved by this bundle:
 * Validation of a deserialized object
 * Serializing a response in JSON
 * Serializing exceptions in JSON
+* Extracting typed values from a query string
 * API documentation generation
 
 ## Installation
@@ -46,6 +47,7 @@ Example:
 <?php declare(strict_types=1);
 
 use Condenast\BasicApiBundle\Annotation as Api;
+use Condenast\BasicApiBundle\Request\QueryParamFetcher;
 use Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -67,17 +69,31 @@ class ArticleController
      *         context={ # Request deserialization context
      *             "groups": "article.write",
      *         },
-     *         validation=@Api\Validation(groups={"article.update"}) # Request validation groups
+     *         validation=@Api\Validation(
+     *             groups={"article.update"}), # Request validation groups
+     *             sequence=true # Create a group sequence from groups. Default value is false
      *     ),
      *     response=@Api\Response(
      *         type=Article::class, # Response serialization type
      *         context={"groups": "article.detail"}, # Request serialization context
-     *         statusCode=201 # The response code, it will be used if the controller returns something that is not an Symfony\Component\HttpFoundation\Response instance
+     *         statusCode=201 # The response code, it will be used if the controller returns something that is not an Symfony\Component\HttpFoundation\Response instance. Default value is 200
      *     )
      * )
      */
-    public function postArticle(Article $article): Article
+    public function postArticle(Article $article, QueryParamFetcher $queryParamFetcher): Article
     {
+        // QueryParamFetcher can be used to extract typed values from request query parameters
+        // To automatically inject a service into the controller method, add the `controller.service_arguments` tag in the service definition of your controller
+        $queryParam = $queryParamFetcher->get('queryParam', null, QueryParamFetcher::TYPE_INT);
+        $arrayQueryParam = $queryParamFetcher->get('queryParam', null, QueryParamFetcher::TYPE_INT, true);
+        $nestedQueryParam = $queryParamFetcher->get('queryParam', '[nested]', QueryParamFetcher::TYPE_STRING);
+        $nestedArrayQueryParam = $queryParamFetcher->get(
+            'queryParam', # Query parameter name
+            '[nested]', # Path to the property nested in the query parameter. Symfony PropertyAccessor notation is used
+            QueryParamFetcher::TYPE_STRING, # Parameter type
+            true # True if an array of values of the above type is expected
+        );
+                
         return $article;
     }
 }
@@ -94,7 +110,8 @@ The bundle does not contain anything for CORS, if necessary, use `nelmio/cors-bu
 
 ### API documentation
 Install `nelmio/api-doc-bundle` and `symfony/twig-bundle` and configure according to the documentation,
-the bundle will add to the documentation everything that can learn about the actions.
+the bundle describers will add to the documentation everything that can learn about the actions.
+Everything missing could be added through the annotations of the controller, as written in the documentation for `nelmio/api-doc-bundle`.
 
 ## Development
 To start a web server with a test application for development and debugging, use the `composer server` command.

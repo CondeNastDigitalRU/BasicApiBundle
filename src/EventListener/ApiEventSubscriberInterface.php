@@ -19,4 +19,5 @@ interface ApiEventSubscriberInterface extends EventSubscriberInterface
 
     public const ATTRIBUTE_VALIDATE = '_basic_api_validate';
     public const ATTRIBUTE_VALIDATION_GROUPS = '_basic_api_request_validation_groups';
+    public const ATTRIBUTE_VALIDATION_GROUP_SEQUENCE = '_basic_api_request_validation_group_sequence';
 }

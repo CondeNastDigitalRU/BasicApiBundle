@@ -6,12 +6,12 @@ use Ramsey\Uuid\UuidInterface;
 
 abstract class Post
 {
-    /** @var UuidInterface */
+    /** @var UuidInterface|null */
     public $id;
 
-    /** @var string */
+    /** @var string|null */
     public $title;
 
-    /** @var int */
+    /** @var int|null */
     public $views;
 }

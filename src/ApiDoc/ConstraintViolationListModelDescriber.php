@@ -81,7 +81,6 @@ class ConstraintViolationListModelDescriber implements ModelDescriberInterface
     public function supports(Model $model): bool
     {
         $className = $model->getType()->getClassName();
-
         return null !== $className && \is_a($className, ConstraintViolationListInterface::class, true);
     }
 }
