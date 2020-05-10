@@ -2,7 +2,6 @@
 
 namespace Condenast\BasicApiBundle\EventListener;
 
-use Condenast\BasicApiBundle\Request\RequestHelper;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -12,6 +11,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class RequestDeserializationSubscriber implements ApiEventSubscriberInterface
 {
+    use ApiEventSubscriberTrait;
+
     /** @var SerializerInterface */
     private $serializer;
 
@@ -36,21 +37,21 @@ class RequestDeserializationSubscriber implements ApiEventSubscriberInterface
 
         if (
             '' === $content
-            || !RequestHelper::isApiRequest($request)
-            || !RequestHelper::isRequestDeserializationEnabled($request)
-            || !RequestHelper::canRequestHaveBody($request)
+            || !$this->isApiRequest($request)
+            || !$this->isRequestDeserializationEnabled($request)
+            || !$this->canRequestHaveBody($request)
         ) {
             return;
         }
 
         try {
-            RequestHelper::setControllerArgument(
+            $this->setControllerArgument(
                 $request,
                 $this->serializer->deserialize(
                     $content,
-                    RequestHelper::getRequestDeserializationType($request),
+                    $this->getRequestDeserializationType($request),
                     'json',
-                    RequestHelper::getRequestDeserializationContext($request)
+                    $this->getRequestDeserializationContext($request)
                 )
             );
         } catch (NotEncodableValueException $e) {

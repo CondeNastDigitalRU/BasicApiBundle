@@ -1,23 +1,30 @@
 Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article:
     properties:
         title:
-            - NotBlank:
-                groups:
-                    - article.update
-            - Length:
-                  groups:
-                    - article.update
-                  min: 4
-                  max: 255
+            -   NotNull:
+                    groups:
+                        - article.types
+            -   Type:
+                    groups:
+                        - article.types
+                    type: string
+            -   Length:
+                    groups:
+                        - article.update
+                    min: 4
+                    max: 255
         tags:
-            - Type:
-                groups:
-                    - article.update
-                type: array
-            - Valid:
-                groups:
-                    - article.update
-            - Count:
-                groups:
-                    - article.update
-                min: 2
+            -   NotNull:
+                    groups:
+                        - article.types
+            -   Type:
+                    groups:
+                        - article.types
+                    type: array
+            -   Valid:
+                    groups:
+                        - article.update
+            -   Count:
+                    groups:
+                        - article.update
+                    min: 2

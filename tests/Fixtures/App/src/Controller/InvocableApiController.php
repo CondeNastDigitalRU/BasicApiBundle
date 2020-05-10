@@ -7,7 +7,7 @@ use Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Note;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Routing\Annotation\Route;
 
-class InvocableController
+class InvocableApiController
 {
     /**
      * Get note

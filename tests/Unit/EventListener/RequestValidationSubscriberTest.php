@@ -7,7 +7,7 @@ use Condenast\BasicApiBundle\EventListener\RequestValidationSubscriber;
 use Condenast\BasicApiBundle\Response\ApiResponse;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Validator\Constraints\Valid;
+use Symfony\Component\Validator\Constraints\GroupSequence;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -39,13 +39,14 @@ class RequestValidationSubscriberTest extends TestCase
                 ->method('validate')
                 ->with(
                     $deserialized,
-                    $this->callback(static function ($constraint) use ($attributes, $deserialized) {
-                        return
-                            \is_array($deserialized) ?
-                                $constraint instanceof Valid && ($constraint->groups === ($attributes[ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS] ?? []))
-                                : null === $constraint;
-                    }),
-                    $attributes[ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS] ?? []
+                    null,
+                    $this->callback(static function ($groups) use ($attributes) {
+                        if (true === ($attributes[ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUP_SEQUENCE] ?? false)) {
+                            return $groups instanceof GroupSequence && $groups->groups === ($attributes[ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS] ?? []);
+                        }
+
+                        return $groups === ($attributes[ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS] ?? []);
+                    })
                 )
                 ->willReturn($violations);
 
@@ -87,7 +88,19 @@ class RequestValidationSubscriberTest extends TestCase
                 true,
                 1
             ],
-            'API request with validation enabled but without validation groups, not empty array argument and validation errors' => [
+            'API request with validation and group sequence enabled, not empty argument and validation errors' => [
+                [
+                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
+                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
+                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS => ['group'],
+                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUP_SEQUENCE => true,
+                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
+                    'value' => new \stdClass(),
+                ],
+                true,
+                1
+            ],
+            'API request with validation enabled, without validation groups, not empty array argument and validation errors' => [
                 [
                     ApiEventSubscriberInterface::ATTRIBUTE_API => true,
                     ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
