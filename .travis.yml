@@ -19,5 +19,4 @@ install:
     - composer update --no-interaction --prefer-dist $COMPOSER_FLAGS
 
 script:
-    - tests/Fixtures/App/bin/console cache:warmup
-    - vendor/bin/simple-phpunit --coverage-clover=coverage.xml
+    - composer tests
