@@ -64,13 +64,15 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
         $requestAnnotation = $actionAnnotation->getRequest();
         if (null !== $requestAnnotation) {
-            $body = $operation->getParameters()->get('body', 'body');
+            if (!$operation->getParameters()->has('body', 'body')) {
+                $body = $operation->getParameters()->get('body', 'body');
 
-            $this->describeSchema(
-                $body->getSchema(),
-                $requestAnnotation->getType(),
-                (array) ($requestAnnotation->getContext()['groups'] ?? [])
-            );
+                $this->describeSchema(
+                    $body->getSchema(),
+                    $requestAnnotation->getType(),
+                    (array)($requestAnnotation->getContext()['groups'] ?? [])
+                );
+            }
 
             if (null !== $requestAnnotation->getValidation()) {
                 $badRequestResponse = $operation->getResponses()->get(HttpResponse::HTTP_BAD_REQUEST);
