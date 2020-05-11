@@ -164,13 +164,13 @@ class QueryParamFetcherTest extends TestCase
             'Array of DateTime' => [QueryParamFetcher::TYPE_DATETIME, true, [1 => '2020-05-10 04:04:04', 2 => '2020-05-10 07:07:07'], [1 => new \DateTime('2020-05-10 04:04:04'), 2 => new \DateTime('2020-05-10 07:07:07')]],
             'Array of DateTimeImmutable' => [QueryParamFetcher::TYPE_DATETIME, true, [1 => '2020-05-10 04:04:04', 2 => '2020-05-10 07:07:07'], [1 => new \DateTimeImmutable('2020-05-10 04:04:04'), 2 => new \DateTimeImmutable('2020-05-10 07:07:07')]],
 
-            'Array of bad Int' => [QueryParamFetcher::TYPE_INT, true, ['1', 'not int'], null],
-            'Array of bad Float' => [QueryParamFetcher::TYPE_FLOAT, true, ['1.0', 'not float'], null],
-            'Array of bad Boolean' => [QueryParamFetcher::TYPE_BOOLEAN, true, ['0', 'false', '1', 'not boolean'], null],
-            'Array of bad String' => [QueryParamFetcher::TYPE_STRING, true, ['value1', ['value2']], null],
-            'Array of bad No type' => [null, true, ['value1', ['value2']], null],
-            'Array of bad DateTime' => [QueryParamFetcher::TYPE_DATETIME, true, ['2020-05-10 04:04:04', ['not datetime']], null],
-            'Array of bad DateTimeImmutable' => [QueryParamFetcher::TYPE_DATETIME, true, ['2020-05-10 04:04:04', ['not datetimeimmutable']], null],
+            'Bad array of Int' => [QueryParamFetcher::TYPE_INT, true, '1', null],
+            'Bad array of Float' => [QueryParamFetcher::TYPE_FLOAT, true, ['1.0', 'not float'], null],
+            'Bad array of Boolean' => [QueryParamFetcher::TYPE_BOOLEAN, true, ['0', 'false', '1', 'not boolean'], null],
+            'Bad array of String' => [QueryParamFetcher::TYPE_STRING, true, ['value1', ['value2']], null],
+            'Bad array of No type' => [null, true, ['value1', ['value2']], null],
+            'Bad array of DateTime' => [QueryParamFetcher::TYPE_DATETIME, true, ['2020-05-10 04:04:04', ['not datetime']], null],
+            'Bad array of DateTimeImmutable' => [QueryParamFetcher::TYPE_DATETIME, true, ['2020-05-10 04:04:04', ['not datetimeimmutable']], null],
         ];
     }
 }
