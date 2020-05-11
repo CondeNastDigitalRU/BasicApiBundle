@@ -4,6 +4,6 @@ namespace Condenast\BasicApiBundle\Tests\Fixtures\App\Entity;
 
 class Note extends Post
 {
-    /** @var string */
+    /** @var string|null */
     public $text;
 }

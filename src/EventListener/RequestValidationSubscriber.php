@@ -2,16 +2,17 @@
 
 namespace Condenast\BasicApiBundle\EventListener;
 
-use Condenast\BasicApiBundle\Request\RequestHelper;
 use Condenast\BasicApiBundle\Response\ApiResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\Validator\Constraints\Valid;
+use Symfony\Component\Validator\Constraints\GroupSequence;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RequestValidationSubscriber implements ApiEventSubscriberInterface
 {
+    use ApiEventSubscriberTrait;
+    
     /** @var ValidatorInterface */
     private $validator;
 
@@ -32,22 +33,27 @@ class RequestValidationSubscriber implements ApiEventSubscriberInterface
         $request = $event->getRequest();
 
         if (
-            !RequestHelper::isApiRequest($request)
-            || !RequestHelper::isRequestValidationEnabled($request)
-            || null === $deserialized = RequestHelper::getControllerArgument($request)) {
+            !$this->isApiRequest($request)
+            || !$this->isRequestValidationEnabled($request)
+            || null === $deserialized = $this->getControllerArgument($request)
+        ) {
             return;
         }
 
-        $groups = RequestHelper::getRequestValidationGroups($request);
+        $groups = $this->getRequestValidationGroups($request);
+
+        if ($this->isRequestValidationGroupSequence($request)) {
+            $groups = new GroupSequence($groups);
+        }
 
         $violations = $this->validator->validate(
             $deserialized,
-            \is_array($deserialized) ? new Valid(['groups' => $groups]) : null,
+            null,
             $groups
         );
 
-        if ($violations->count() !== 0) {
-            RequestHelper::resetResponseSerializationContext($request);
+        if (0 !== $violations->count()) {
+            $this->resetResponseSerializationContext($request);
             $event->setController(static function () use ($violations): ApiResponse {
                 return new ApiResponse($violations, Response::HTTP_BAD_REQUEST);
             });

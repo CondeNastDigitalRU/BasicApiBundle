@@ -4,7 +4,7 @@ namespace Condenast\BasicApiBundle\DependencyInjection\Compiler;
 
 use Condenast\BasicApiBundle\ApiDoc\ConstraintViolationListModelDescriber;
 use Condenast\BasicApiBundle\ApiDoc\RamseyUuidModelDescriber;
-use Condenast\BasicApiBundle\ApiDoc\RouteDescriber;
+use Condenast\BasicApiBundle\ApiDoc\ApiRouteDescriber;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -16,21 +16,23 @@ class NelmioApiDocPass implements CompilerPassInterface
     {
         if ($container->hasExtension('nelmio_api_doc')) {
             $container->setDefinition(
-                ConstraintViolationListModelDescriber::class,
-                (new Definition(ConstraintViolationListModelDescriber::class))->addTag('nelmio_api_doc.model_describer', ['priority' => -10])
+                'condenast_basic_api.apidoc.describer.model.constraint_violation_list',
+                (new Definition(ConstraintViolationListModelDescriber::class))->addTag('nelmio_api_doc.model_describer', ['priority' => 128])
             );
 
             $container->setDefinition(
-                RamseyUuidModelDescriber::class,
-                (new Definition(RamseyUuidModelDescriber::class))->addTag('nelmio_api_doc.model_describer', ['priority' => -10])
+                'condenast_basic_api.apidoc.describer.model.ramsey_uuid',
+                (new Definition(RamseyUuidModelDescriber::class))->addTag('nelmio_api_doc.model_describer', ['priority' => 128])
             );
 
             $container->setDefinition(
-                RouteDescriber::class,
-                (new Definition(RouteDescriber::class))
-                    ->setArgument('$annotationReader', new Reference('basic_api.annotations_reader'))
-                    ->setArgument('$controllerReflector', new Reference('nelmio_api_doc.controller_reflector'))
-                    ->addTag('nelmio_api_doc.route_describer', ['priority' => -10])
+                'condenast_basic_api.apidoc.describer.route.api',
+                (new Definition(ApiRouteDescriber::class))
+                    ->setArguments([
+                        new Reference('condenast_basic_api.annotations_reader'),
+                        new Reference('nelmio_api_doc.controller_reflector')
+                    ])
+                    ->addTag('nelmio_api_doc.route_describer', ['priority' => -256])
             );
         }
     }

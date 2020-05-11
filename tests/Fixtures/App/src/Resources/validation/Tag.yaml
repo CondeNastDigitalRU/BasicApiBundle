@@ -1,10 +1,28 @@
 Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Tag:
     properties:
         name:
-            - NotBlank:
-                groups:
-                    - article.update
+            -   NotNull:
+                    groups:
+                        - article.types
+            -   Type:
+                    groups:
+                        - article.types
+                    type: string
+            -   Length:
+                    groups:
+                        - article.update
+                    min: 1
+                    max: 255
         slug:
-            - NotBlank:
-                  groups:
-                      - article.update
+            -   NotNull:
+                    groups:
+                        - article.types
+            -   Type:
+                    groups:
+                        - article.types
+                    type: string
+            -   Length:
+                    groups:
+                        - article.update
+                    min: 1
+                    max: 255

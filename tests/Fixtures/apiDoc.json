@@ -5,37 +5,6 @@
     "version": "0.0.0"
   },
   "paths": {
-    "/api/notes/{id}": {
-      "get": {
-        "summary": "Get note",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "pattern": "\\d+"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/Note"
-            }
-          }
-        },
-        "tags": [
-          "Note"
-        ]
-      }
-    },
     "/api/articles/{id}": {
       "get": {
         "summary": "Get article",
@@ -101,7 +70,7 @@
         ],
         "parameters": [
           {
-            "name": "",
+            "name": "body",
             "in": "body",
             "schema": {
               "$ref": "#/definitions/Article3"
@@ -116,7 +85,7 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "Bad Request",
             "schema": {
               "$ref": "#/definitions/ConstraintViolationListInterface"
             }
@@ -138,7 +107,7 @@
         ],
         "parameters": [
           {
-            "name": "",
+            "name": "body",
             "in": "body",
             "schema": {
               "items": {
@@ -159,7 +128,7 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "Bad Request",
             "schema": {
               "$ref": "#/definitions/ConstraintViolationListInterface"
             }
@@ -283,26 +252,40 @@
           "Void"
         ]
       }
+    },
+    "/api/notes/{id}": {
+      "get": {
+        "summary": "Get note",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": "\\d+"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Note"
+            }
+          }
+        },
+        "tags": [
+          "Note"
+        ]
+      }
     }
   },
   "definitions": {
-    "Note": {
-      "properties": {
-        "text": {
-          "type": "string"
-        },
-        "id": {
-          "$ref": "#/definitions/UuidInterface"
-        },
-        "title": {
-          "type": "string"
-        },
-        "views": {
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
     "Article": {
       "properties": {
         "headline": {
@@ -318,7 +301,7 @@
           "type": "array"
         },
         "id": {
-          "$ref": "#/definitions/UuidInterface2"
+          "$ref": "#/definitions/UuidInterface"
         },
         "title": {
           "type": "string"
@@ -335,7 +318,7 @@
           "type": "string"
         },
         "id": {
-          "$ref": "#/definitions/UuidInterface3"
+          "$ref": "#/definitions/UuidInterface2"
         },
         "title": {
           "type": "string"
@@ -361,7 +344,7 @@
           "type": "array"
         },
         "id": {
-          "$ref": "#/definitions/UuidInterface4"
+          "$ref": "#/definitions/UuidInterface3"
         },
         "title": {
           "type": "string"
@@ -427,9 +410,22 @@
         }
       }
     },
-    "UuidInterface": {
-      "example": "00000000-0000-0000-0000-000000000000",
-      "type": "string"
+    "Note": {
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/definitions/UuidInterface4"
+        },
+        "title": {
+          "type": "string"
+        },
+        "views": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
     },
     "Tag": {
       "properties": {
@@ -442,13 +438,15 @@
       },
       "type": "object"
     },
+    "UuidInterface": {
+      "example": "00000000-0000-0000-0000-000000000000",
+      "type": "string",
+      "format": "uuid"
+    },
     "UuidInterface2": {
       "example": "00000000-0000-0000-0000-000000000000",
-      "type": "string"
-    },
-    "UuidInterface3": {
-      "example": "00000000-0000-0000-0000-000000000000",
-      "type": "string"
+      "type": "string",
+      "format": "uuid"
     },
     "Tag2": {
       "properties": {
@@ -461,9 +459,15 @@
       },
       "type": "object"
     },
+    "UuidInterface3": {
+      "example": "00000000-0000-0000-0000-000000000000",
+      "type": "string",
+      "format": "uuid"
+    },
     "UuidInterface4": {
       "example": "00000000-0000-0000-0000-000000000000",
-      "type": "string"
+      "type": "string",
+      "format": "uuid"
     }
   },
   "host": "localhost"

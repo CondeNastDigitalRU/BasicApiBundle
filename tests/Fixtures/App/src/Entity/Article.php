@@ -4,12 +4,12 @@ namespace Condenast\BasicApiBundle\Tests\Fixtures\App\Entity;
 
 class Article extends Post
 {
-    /** @var string */
+    /** @var string|null */
     public $headline;
 
-    /** @var string */
+    /** @var string|null */
     public $content;
 
-    /** @var Tag[] */
+    /** @var Tag[]|null */
     public $tags;
 }

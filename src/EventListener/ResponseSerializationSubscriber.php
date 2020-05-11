@@ -2,7 +2,6 @@
 
 namespace Condenast\BasicApiBundle\EventListener;
 
-use Condenast\BasicApiBundle\Request\RequestHelper;
 use Condenast\BasicApiBundle\Response\ApiResponse;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
@@ -11,6 +10,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class ResponseSerializationSubscriber implements ApiEventSubscriberInterface
 {
+    use ApiEventSubscriberTrait;
+
     /** @var SerializerInterface */
     protected $serializer;
 
@@ -31,7 +32,7 @@ class ResponseSerializationSubscriber implements ApiEventSubscriberInterface
     {
         $request = $event->getRequest();
 
-        if (!RequestHelper::isApiRequest($request)) {
+        if (!$this->isApiRequest($request)) {
             return;
         }
 
@@ -43,22 +44,22 @@ class ResponseSerializationSubscriber implements ApiEventSubscriberInterface
         $request = $event->getRequest();
         $response = $event->getResponse();
 
-        if (!$response instanceof ApiResponse || !RequestHelper::isApiRequest($request)) {
+        if (!$response instanceof ApiResponse || !$this->isApiRequest($request)) {
             return;
         }
 
         if (!$response->isStatusCodeSet()) {
-            $response->setStatusCode(RequestHelper::getResponseStatusCode($request));
+            $response->setStatusCode($this->getResponseStatusCode($request));
         }
 
-        if ($response->getData() === null) {
+        if (null === $response->getData()) {
             return;
         }
 
         $response->setContent($this->serializer->serialize(
             $response->getData(),
             'json',
-            RequestHelper::getResponseSerializationContext($request)
+            $this->getResponseSerializationContext($request)
         ));
 
         if (!$response->headers->has('Content-Type')) {

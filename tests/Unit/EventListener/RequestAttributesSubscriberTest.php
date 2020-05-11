@@ -25,7 +25,7 @@ class RequestAttributesSubscriberTest extends TestCase
         $request = $this->createRequestMock(null, null, null, $attributes);
         $event = $this->createControllerEventMock($request, $controller);
 
-        if (\count($expectedAttributes) !== 0) {
+        if (0 !== \count($expectedAttributes)) {
             $i = 0;
             foreach ($expectedAttributes as $name => $value) {
                 $attributes
@@ -60,6 +60,7 @@ class RequestAttributesSubscriberTest extends TestCase
                         'context' => ['groups' => ['deserialization_group']],
                         'validation' => new Validation([
                             'groups' => ['group'],
+                            'sequence' => true,
                         ])
                     ]),
                     'response' => new Response([
@@ -77,12 +78,13 @@ class RequestAttributesSubscriberTest extends TestCase
                     ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
                     ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
                     ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS => ['group'],
+                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUP_SEQUENCE => true,
                     ApiEventSubscriberInterface::ATTRIBUTE_SERIALIZATION_TYPE => \stdClass::class,
                     ApiEventSubscriberInterface::ATTRIBUTE_SERIALIZATION_CONTEXT => ['groups' => ['serialization_group']],
                     ApiEventSubscriberInterface::ATTRIBUTE_STATUS_CODE => 405,
                 ],
             ],
-            'Only request with validation' => [
+            'Only Request with Validation' => [
                 new Action([
                     'request' => new Request([
                         'argument' => 'value',
@@ -102,9 +104,10 @@ class RequestAttributesSubscriberTest extends TestCase
                     ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
                     ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
                     ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS => ['group'],
+                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUP_SEQUENCE => false,
                 ],
             ],
-            'Only request without validation' => [
+            'Only Request without Validation' => [
                 new Action([
                     'request' => new Request([
                         'argument' => 'value',
@@ -121,7 +124,7 @@ class RequestAttributesSubscriberTest extends TestCase
                     ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
                 ],
             ],
-            'Only response' => [
+            'Only Response' => [
                 new Action([
                     'response' => new Response([
                         'type' => \stdClass::class,
@@ -150,6 +153,7 @@ class RequestAttributesSubscriberTest extends TestCase
                         'context' => ['groups' => ['deserialization_group']],
                         'validation' => new Validation([
                             'groups' => ['group'],
+                            'sequence' => true,
                         ])
                     ]),
                     'response' => new Response([
@@ -171,6 +175,7 @@ class RequestAttributesSubscriberTest extends TestCase
                     ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
                     ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
                     ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS => ['group'],
+                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUP_SEQUENCE => true,
                     ApiEventSubscriberInterface::ATTRIBUTE_SERIALIZATION_TYPE => \stdClass::class,
                     ApiEventSubscriberInterface::ATTRIBUTE_SERIALIZATION_CONTEXT => ['groups' => ['serialization_group']],
                     ApiEventSubscriberInterface::ATTRIBUTE_STATUS_CODE => 405,

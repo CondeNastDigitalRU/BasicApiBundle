@@ -32,7 +32,7 @@ class RequestAttributesSubscriber implements ApiEventSubscriberInterface
             $controller = [$controller, '__invoke'];
         }
 
-        if (!\is_array($controller) || \count($controller) !== 2) {
+        if (!\is_array($controller) || 2 !== \count($controller)) {
             return;
         }
 
@@ -63,6 +63,7 @@ class RequestAttributesSubscriber implements ApiEventSubscriberInterface
             if ($validationAnnotation = $requestAnnotation->getValidation()) {
                 $request->attributes->set(self::ATTRIBUTE_VALIDATE, true);
                 $request->attributes->set(self::ATTRIBUTE_VALIDATION_GROUPS, $validationAnnotation->getGroups());
+                $request->attributes->set(self::ATTRIBUTE_VALIDATION_GROUP_SEQUENCE, $validationAnnotation->isSequence());
             }
         }
 

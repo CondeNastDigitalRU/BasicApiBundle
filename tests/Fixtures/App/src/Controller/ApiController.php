@@ -3,6 +3,7 @@
 namespace Condenast\BasicApiBundle\Tests\Fixtures\App\Controller;
 
 use Condenast\BasicApiBundle\Annotation as Api;
+use Condenast\BasicApiBundle\Request\QueryParamFetcher;
 use Condenast\BasicApiBundle\Response\ApiResponse;
 use Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article;
 use Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Tag;
@@ -11,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
-class TestController
+class ApiController
 {
     /**
      * Get article
@@ -51,8 +52,11 @@ class TestController
      *     )
      * )
      */
-    public function getArticles(): array
+    public function getArticles(QueryParamFetcher $queryParamFetcher): array
     {
+        // Just for example and checking autowiring
+        $ids = $queryParamFetcher->get('filter', '[ids]', QueryParamFetcher::TYPE_INT, true);
+
         return [
             $this->createAlpacaArticle(),
             $this->createLlamaArticle(),
@@ -75,7 +79,10 @@ class TestController
      *         context={
      *             "groups": "article.write",
      *         },
-     *         validation=@Api\Validation(groups={"article.update"})
+     *         validation=@Api\Validation(
+     *             groups={"article.types", "article.update"},
+     *             sequence=true
+     *         )
      *     ),
      *     response=@Api\Response(
      *         type=Article::class,
