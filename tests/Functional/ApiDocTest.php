@@ -4,6 +4,9 @@ namespace Condenast\BasicApiBundle\Tests\Functional;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
+/**
+ * @coversNothing
+ */
 class ApiDocTest extends WebTestCase
 {
     public function testApiDoc(): void

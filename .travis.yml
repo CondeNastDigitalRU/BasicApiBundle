@@ -1,0 +1,23 @@
+language: php
+
+php:
+    - 7.2
+    - 7.3
+    - 7.4
+
+env:
+    matrix:
+        - COMPOSER_FLAGS="--prefer-lowest"
+        - COMPOSER_FLAGS="--prefer-stable"
+
+cache:
+    directories:
+        - $HOME/.composer/cache/files
+
+install:
+    - composer self-update
+    - composer update --no-interaction --prefer-dist $COMPOSER_FLAGS
+
+script:
+    - tests/Fixtures/App/bin/console cache:warmup
+    - vendor/bin/simple-phpunit --coverage-clover=coverage.xml
