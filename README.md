@@ -1,6 +1,8 @@
 # Basic API Bundle
 The bundle for rapid API development without writing boilerplate code.
 
+[![Build Status](https://travis-ci.com/CondeNastDigitalRU/BasicApiBundle.svg?branch=master)](https://travis-ci.com/CondeNastDigitalRU/BasicApiBundle)
+
 The main purpose of the bundle is to work with DTO: serialize, deserialize and validate, it does not know anything about the database and ORM.
 
 Tasks solved by this bundle:
