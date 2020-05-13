@@ -36,10 +36,10 @@
         "phpstan/phpstan-deprecation-rules": "^0.12.2",
         "ramsey/uuid": "^3|^4",
         "symfony/asset": "^5",
-        "symfony/browser-kit": "^5.0",
+        "symfony/browser-kit": "^5",
         "symfony/console": "^5",
         "symfony/dotenv": "^5",
-        "symfony/phpunit-bridge": "^5.0",
+        "symfony/phpunit-bridge": "^5",
         "symfony/routing": "^5",
         "symfony/twig-bundle": "^5",
         "symfony/yaml": "^5"
@@ -50,8 +50,8 @@
     },
     "conflict": {
         "phpdocumentor/type-resolver": "1.0.0",
-        "nelmio/api-doc-bundle": "<3.0",
-        "ramsey/uuid": "<3.0"
+        "nelmio/api-doc-bundle": "<3",
+        "ramsey/uuid": "<3"
     },
     "autoload": {
         "psr-4": {
@@ -66,39 +66,5 @@
     },
     "config": {
         "sort-packages": true
-    },
-    "scripts": {
-        "bootstrap": [
-            "@putenv APP_PATH=tests/Fixtures/App"
-        ],
-        "bootstrap-dev": [
-            "@putenv APP_ENV=dev",
-            "@bootstrap"
-        ],
-        "bootstrap-test": [
-            "@putenv APP_ENV=test",
-            "@putenv COMPOSER_MEMORY_LIMIT=-1",
-            "@bootstrap"
-        ],
-        "php-cs-fixer": "php-cs-fixer fix --dry-run --verbose --diff",
-        "phpstan": "phpstan analyse --configuration phpstan.neon --level=max --no-progress src",
-        "phpunit": [
-            "@bootstrap-test",
-            "${APP_PATH}/bin/console cache:clear",
-            "simple-phpunit --coverage-text --colors=never"
-        ],
-        "server": [
-            "@bootstrap-dev",
-            "Composer\\Config::disableProcessTimeout",
-            "symfony server:stop --dir=${APP_PATH}",
-            "${APP_PATH}/bin/console cache:clear",
-            "${APP_PATH}/bin/console assets:install",
-            "symfony server:start --dir=${APP_PATH} --port=8080 --no-tls"
-        ],
-        "tests": [
-            "@phpunit",
-            "@php-cs-fixer",
-            "@phpstan"
-        ]
     }
 }
