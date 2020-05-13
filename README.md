@@ -116,8 +116,8 @@ the bundle describers will add to the documentation everything that can learn ab
 Everything missing could be added through the annotations of the controller, as written in the documentation for `nelmio/api-doc-bundle`.
 
 ## Development
-To start a web server with a test application for development and debugging, use the `composer server` command.
+To start a web server with a test application for development and debugging, make sure the Symfony CLI is installed and run the `make server` command.
 The test application code is located in the `tests/Fixtures/App` directory.
 
 ## Tests
-To run the tests, use the `composer tests` command.
+To run the tests, use the `make tests` command.
