@@ -20,7 +20,7 @@ tests: php-cs-fixer phpstan phpunit
 .PHONY: server
 server: export APP_ENV=dev
 server:
-	symfony server:stop --dir=$(APP_DIR)
+	$(SYMFONY_CLI) server:stop --dir=$(APP_DIR)
 	$(APP_BIN_DIR)/console cache:clear
 	$(APP_BIN_DIR)/console assets:install
-	symfony server:start --dir=$(APP_DIR) --port=8080 --no-tls
+	$(SYMFONY_CLI) server:start --dir=$(APP_DIR) --port=8080 --no-tls
