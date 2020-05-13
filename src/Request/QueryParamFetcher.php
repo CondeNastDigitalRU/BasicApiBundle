@@ -47,7 +47,11 @@ class QueryParamFetcher
             $value = $this->propertyAccessor->getValue($value, $path);
         }
 
-        if ($isArray && \is_array($value)) {
+        if ($isArray) {
+            if (!\is_array($value)) {
+                return null;
+            }
+
             $items = [];
             foreach ($value as $key => $item) {
                 $item = $this->cast($item, $type);
