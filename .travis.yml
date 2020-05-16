@@ -7,8 +7,8 @@ php:
 
 env:
     matrix:
-        - COMPOSER_FLAGS="--prefer-lowest"
-        - COMPOSER_FLAGS="--prefer-stable"
+        - COMPOSER_FLAGS='--prefer-lowest'
+        - COMPOSER_FLAGS='--prefer-stable'
 
 cache:
     directories:
@@ -18,5 +18,12 @@ install:
     - composer self-update
     - composer update --no-interaction --prefer-dist $COMPOSER_FLAGS
 
+jobs:
+    include:
+        - php: 7.4
+          env: COMPOSER_FLAGS='--prefer-stable'
+          script:
+              - make php-cs-fixer
+              - make phpstan
 script:
-    - make tests
+    - make phpunit

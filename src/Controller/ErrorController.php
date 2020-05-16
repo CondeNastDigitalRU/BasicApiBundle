@@ -16,8 +16,10 @@ class ErrorController
         $this->debug = $debug;
     }
 
-    public function __invoke(FlattenException $exception): ApiResponse
+    public function __invoke(\Throwable $exception): ApiResponse
     {
+        $exception = FlattenException::createFromThrowable($exception);
+
         return new ApiResponse(
             $this->debug ? Sanitizer::sanitizeRecursive($exception->toArray()) : ['message' => $exception->getStatusText()],
             $exception->getStatusCode(),

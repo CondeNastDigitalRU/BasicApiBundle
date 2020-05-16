@@ -1,6 +1,6 @@
-Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Tag:
+Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article:
     properties:
-        name:
+        title:
             -   NotNull:
                     groups:
                         - article.types
@@ -10,19 +10,20 @@ Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Tag:
                     type: string
             -   Length:
                     groups:
-                        - article.update
-                    min: 1
+                        - article.write
+                    allowEmptyString: false
+                    min: 4
                     max: 255
-        slug:
+        tags:
             -   NotNull:
                     groups:
                         - article.types
             -   Type:
                     groups:
                         - article.types
-                    type: string
-            -   Length:
+                    type: array
+            -   Valid: ~
+            -   Count:
                     groups:
-                        - article.update
-                    min: 1
-                    max: 255
+                        - article.write
+                    min: 2
