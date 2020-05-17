@@ -2,6 +2,7 @@
 
 namespace Condenast\BasicApiBundle\Request;
 
+use Condenast\BasicApiBundle\Exception\InvalidArgumentException;
 use Condenast\BasicApiBundle\Exception\RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -99,7 +100,7 @@ class QueryParamFetcher
 
                 return $value;
             default:
-                throw new RuntimeException(\sprintf('Unknown type "%s"', $type));
+                throw new InvalidArgumentException(\sprintf('Unknown type "%s"', $type));
         }
     }
 

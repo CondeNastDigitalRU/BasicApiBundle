@@ -2,6 +2,7 @@
 
 namespace Condenast\BasicApiBundle\Tests\Unit\Request;
 
+use Condenast\BasicApiBundle\Exception\InvalidArgumentException;
 use Condenast\BasicApiBundle\Exception\RuntimeException;
 use Condenast\BasicApiBundle\Request\QueryParamFetcher;
 use PHPUnit\Framework\TestCase;
@@ -128,7 +129,7 @@ class QueryParamFetcherTest extends TestCase
 
         $queryParamFetcher = new QueryParamFetcher($requestStack, $propertyAccessor);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Unknown type "unknown type"');
 
         $queryParamFetcher->get('param', null, 'unknown type');

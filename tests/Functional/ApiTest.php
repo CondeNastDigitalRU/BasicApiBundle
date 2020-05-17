@@ -275,14 +275,14 @@ class ApiTest extends WebTestCase
         $this->assertEquals('title', $violations['violations'][0]['propertyPath']);
         $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][0]['type']);
 
-        $this->assertEquals('tags[0].name', $violations['violations'][1]['propertyPath']);
-        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][1]['type']);
+        $this->assertEquals('tags', $violations['violations'][1]['propertyPath']);
+        $this->assertEquals('urn:uuid:bef8e338-6ae5-4caf-b8e2-50e7b0579e69', $violations['violations'][1]['type']);
 
-        $this->assertEquals('tags[0].slug', $violations['violations'][2]['propertyPath']);
+        $this->assertEquals('tags[0].name', $violations['violations'][2]['propertyPath']);
         $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][2]['type']);
 
-        $this->assertEquals('tags', $violations['violations'][3]['propertyPath']);
-        $this->assertEquals('urn:uuid:bef8e338-6ae5-4caf-b8e2-50e7b0579e69', $violations['violations'][3]['type']);
+        $this->assertEquals('tags[0].slug', $violations['violations'][3]['propertyPath']);
+        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][3]['type']);
     }
 
     public function testObjectCollectionValidation(): void
@@ -334,11 +334,11 @@ class ApiTest extends WebTestCase
         $this->assertEquals('[0].title', $violations['violations'][0]['propertyPath']);
         $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][0]['type']);
 
-        $this->assertEquals('[0].tags[0].name', $violations['violations'][1]['propertyPath']);
-        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][1]['type']);
+        $this->assertEquals('[0].tags', $violations['violations'][1]['propertyPath']);
+        $this->assertEquals('urn:uuid:bef8e338-6ae5-4caf-b8e2-50e7b0579e69', $violations['violations'][1]['type']);
 
-        $this->assertEquals('[0].tags', $violations['violations'][2]['propertyPath']);
-        $this->assertEquals('urn:uuid:bef8e338-6ae5-4caf-b8e2-50e7b0579e69', $violations['violations'][2]['type']);
+        $this->assertEquals('[0].tags[0].name', $violations['violations'][2]['propertyPath']);
+        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][2]['type']);
 
         $this->assertEquals('[1].title', $violations['violations'][3]['propertyPath']);
         $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][3]['type']);

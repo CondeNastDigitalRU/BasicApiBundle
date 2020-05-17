@@ -1,6 +1,6 @@
 controllers:
     prefix: api
-    resource: '../src/Controller'
+    resource: ../src/Controller
     type: annotation
 
 app.swagger_ui:

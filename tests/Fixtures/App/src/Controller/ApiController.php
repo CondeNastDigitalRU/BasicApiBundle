@@ -80,7 +80,7 @@ class ApiController
      *             "groups": "article.write",
      *         },
      *         validation=@Api\Validation(
-     *             groups={"article.types", "article.update"},
+     *             groups={"article.types", "article.write"},
      *             sequence=true
      *         )
      *     ),
@@ -112,7 +112,10 @@ class ApiController
      *         context={
      *             "groups": "article.write",
      *         },
-     *         validation=@Api\Validation(groups={"article.update"})
+     *         validation=@Api\Validation(
+     *             groups={"article.types", "article.write"},
+     *             sequence=true
+     *         )
      *     ),
      *     response=@Api\Response(
      *         type="Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article[]",

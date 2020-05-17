@@ -38,7 +38,7 @@ class ApiResponse extends Response
     }
 
     /**
-     * @param string|false|null $text
+     * @param string|null $text
      */
     public function setStatusCode(int $code, $text = null): object
     {

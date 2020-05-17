@@ -9,25 +9,22 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 class RamseyUuidNormalizer implements NormalizerInterface, DenormalizerInterface
 {
-    /**
-     * @param UuidInterface $data
-     */
-    public function normalize($data, string $format = null, array $context = []): string
+    public function normalize($data, $format = null, array $context = []): string
     {
         return $data->toString();
     }
 
-    public function supportsNormalization($data, string $format = null): bool
+    public function supportsNormalization($data, $format = null): bool
     {
         return $data instanceof UuidInterface;
     }
 
-    public function denormalize($data, string $type, string $format = null, array $context = []): UuidInterface
+    public function denormalize($data, $type, $format = null, array $context = []): UuidInterface
     {
         return Uuid::fromString($data);
     }
 
-    public function supportsDenormalization($data, string $type, string $format = null): bool
+    public function supportsDenormalization($data, $type, $format = null): bool
     {
         return \is_string($data) && \is_a($type, UuidInterface::class, true) && Uuid::isValid($data);
     }
