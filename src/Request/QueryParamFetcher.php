@@ -38,6 +38,7 @@ class QueryParamFetcher
             $type = self::TYPE_STRING;
         }
 
+        /** @var mixed $value */
         $value = $this->getRequest()->query->get($name);
 
         if (null !== $path) {
