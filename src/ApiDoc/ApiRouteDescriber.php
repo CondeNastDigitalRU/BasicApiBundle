@@ -148,6 +148,9 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
             return null;
         }
 
-        return $this->annotationReader->getMethodAnnotation($methodReflection, ActionAnnotation::class); /** @phpstan-ignore-line */
+        /** @var ActionAnnotation $annotation */
+        $annotation = $this->annotationReader->getMethodAnnotation($methodReflection, ActionAnnotation::class);
+
+        return $annotation;
     }
 }
