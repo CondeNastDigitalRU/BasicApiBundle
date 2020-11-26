@@ -185,6 +185,7 @@ class RequestDeserializationSubscriberTest extends TestCase
         return [
             [$this->createMock(NotEncodableValueException::class), BadRequestHttpException::class, 'Request does not contain valid json'],
             [$this->createMock(ExceptionInterface::class), BadRequestHttpException::class, 'Request can\'t be deserialized'],
+            [$this->createMock(\TypeError::class), BadRequestHttpException::class, 'Request can\'t be deserialized'],
         ];
     }
 }
