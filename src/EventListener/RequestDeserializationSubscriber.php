@@ -56,7 +56,7 @@ class RequestDeserializationSubscriber implements ApiEventSubscriberInterface
             );
         } catch (NotEncodableValueException $e) {
             throw new BadRequestHttpException('Request does not contain valid json', $e);
-        } catch (ExceptionInterface $e) {
+        } catch (ExceptionInterface|\TypeError $e) {
             throw new BadRequestHttpException('Request can\'t be deserialized', $e);
         }
     }
