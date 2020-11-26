@@ -67,14 +67,16 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
             if (!$operation->getParameters()->has('body', 'body')) {
                 $body = $operation->getParameters()->get('body', 'body');
 
+                $groups = (array)($requestAnnotation->getContext()['groups'] ?? []);
+
                 $this->describeSchema(
                     $body->getSchema(),
                     $requestAnnotation->getType(),
-                    (array)($requestAnnotation->getContext()['groups'] ?? [])
+                    !empty($groups) ? $groups : null
                 );
             }
 
-            if (null !== $requestAnnotation->getValidation()) {
+            if (null !== $requestAnnotation->getValidation() && !$operation->getResponses()->has(HttpResponse::HTTP_BAD_REQUEST)) {
                 $badRequestResponse = $operation->getResponses()->get(HttpResponse::HTTP_BAD_REQUEST);
 
                 if (null === $badRequestResponse->getDescription()) {
@@ -83,14 +85,13 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
                 $this->describeSchema(
                     $badRequestResponse->getSchema(),
-                    ConstraintViolationListInterface::class,
-                    []
+                    ConstraintViolationListInterface::class
                 );
             }
         }
 
         $responseAnnotation = $actionAnnotation->getResponse();
-        if (null !== $responseAnnotation) {
+        if (null !== $responseAnnotation && !$operation->getResponses()->has($responseAnnotation->getStatusCode())) {
             $response = $operation->getResponses()->get($responseAnnotation->getStatusCode());
 
             if (null === $response->getDescription()) {
@@ -98,12 +99,18 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
             }
 
             if (null !== $responseAnnotation->getType()) {
-                $this->describeSchema($response->getSchema(), $responseAnnotation->getType(), (array)($responseAnnotation->getContext()['groups'] ?? []));
+                $groups = (array)($responseAnnotation->getContext()['groups'] ?? []);
+
+                $this->describeSchema(
+                    $response->getSchema(),
+                    $responseAnnotation->getType(),
+                    !empty($groups) ? $groups : null
+                );
             }
         }
     }
 
-    private function describeSchema(Schema $schema, string $type, array $groups): void
+    private function describeSchema(Schema $schema, string $type, ?array $groups = null): void
     {
         if (null !== $schema->getType() || null !== $schema->getRef()) {
             return;
@@ -126,7 +133,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
         }
     }
 
-    private function registerModel(string $type, array $groups): string
+    private function registerModel(string $type, ?array $groups = null): string
     {
         return $this->modelRegistry->register(new Model(
             new Type(Type::BUILTIN_TYPE_OBJECT, false, $type),
