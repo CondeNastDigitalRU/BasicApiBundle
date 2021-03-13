@@ -3,470 +3,163 @@
 namespace Condenast\BasicApiBundle\Tests\Functional;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\Response;
 
-class ApiTest extends WebTestCase
+final class ApiTest extends WebTestCase
 {
-    public function testObjectSerialization(): void
+    use Assert;
+    use Client;
+
+    /**
+     * @test
+     */
+    public function it_can_fetch_query_parameters(): void
     {
-        $client = static::createClient();
+        $response = self::request('GET', '/api/query_params');
 
-        $client->request('GET', '/api/articles/1');
-        $response = $client->getResponse();
-
-        $this->assertJsonResponse($response, 200);
-        $this->assertJsonStringEqualsJsonString(
+        self::assertJsonResponse($response, 200);
+        self::assertJsonStringEqualsJsonString(
             \json_encode([
-                'id' => 'a117aca5-a117-aca5-a117-aca5a117aca5',
-                'title' => 'Alpacas are amazing',
-                'headline' => 'Alpacas are the best',
-                'content' => 'Something interesting about alpacas',
-                'tags' => [
-                    [
-                        'name' => 'Animals',
-                        'slug' => 'animals',
-                    ],
-                    [
-                        'name' => 'Alpaca',
-                        'slug' => 'alpaca',
-                    ]
-                ],
-                'views' => 47,
+                'string' => 'default',
+                'strings' => [],
             ]),
             $response->getContent()
         );
     }
 
-    public function testObjectCollectionSerialization(): void
+    /**
+     * @test
+     */
+    public function it_can_serialize_an_object(): void
     {
-        $client = static::createClient();
+        $response = self::request('GET', '/api/articles/1');
 
-        $client->request('GET', '/api/articles');
-        $response = $client->getResponse();
-
-        $this->assertJsonResponse($response, 200);
-        $this->assertJsonStringEqualsJsonString(
-            \json_encode(
-                [
-                    [
-                        'id' => 'a117aca5-a117-aca5-a117-aca5a117aca5',
-                        'title' => 'Alpacas are amazing',
-                        'headline' => 'Alpacas are the best',
-                        'views' => 47,
-                    ],
-                    [
-                        'id' => '11a111a5-11a1-11a5-11a1-11a511a111a5',
-                        'title' => 'Llamas are awesome',
-                        'headline' => 'Llamas are good, but alpacas are the best',
-                        'views' => 17,
-                    ]
-                ]
-            ),
-            $response->getContent()
-        );
+        self::assertJsonResponse($response, 200);
+        self::assertJsonStringEqualsJsonString(ObjectMother::alpacaArticleJson(), $response->getContent());
     }
 
-    public function testObjectDeserialization(): void
+    /**
+     * @test
+     */
+    public function it_can_serialize_an_array_of_objects(): void
     {
-        $client = static::createClient();
+        $response = self::request('GET', '/api/articles');
 
-        $client->request(
-            'POST',
-            '/api/articles',
-            [],
-            [],
-            [
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            \json_encode([
-                'id' => 'a117aca5-a117-aca5-a117-aca5a117aca5',
-                'title' => 'Alpacas are amazing',
-                'headline' => 'Alpacas are the best',
-                'content' => 'Something interesting about alpacas',
-                'tags' => [
-                    [
-                        'name' => 'Animals',
-                        'slug' => 'animals',
-                    ],
-                    [
-                        'name' => 'Alpaca',
-                        'slug' => 'alpaca',
-                    ]
-                ],
-            ])
-        );
-        $response = $client->getResponse();
-
-        $this->assertJsonResponse($response, 201);
-        $this->assertJsonStringEqualsJsonString(
-            \json_encode([
-                'id' => 'a117aca5-a117-aca5-a117-aca5a117aca5',
-                'title' => 'Alpacas are amazing',
-                'headline' => 'Alpacas are the best',
-                'content' => 'Something interesting about alpacas',
-                'tags' => [
-                    [
-                        'name' => 'Animals',
-                        'slug' => 'animals',
-                    ],
-                    [
-                        'name' => 'Alpaca',
-                        'slug' => 'alpaca',
-                    ]
-                ],
-                'views' => null,
-            ]),
-            $response->getContent()
-        );
+        self::assertJsonResponse($response, 200);
+        self::assertJsonStringEqualsJsonString(ObjectMother::articlesJson(), $response->getContent());
     }
 
-    public function testObjectCollectionDeserialization(): void
+    /**
+     * @test
+     */
+    public function it_can_deserialize_a_request_into_an_object(): void
     {
-        $client = static::createClient();
+        $response = self::request('POST', '/api/articles', ObjectMother::alpacaArticleJson());
 
-        $client->request(
-            'POST',
-            '/api/articles/batch',
-            [],
-            [],
-            [
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            \json_encode([
-                [
-                    'id' => 'a117aca5-a117-aca5-a117-aca5a117aca5',
-                    'title' => 'Alpacas are amazing',
-                    'headline' => 'Alpacas are the best',
-                    'content' => 'Something interesting about alpacas',
-                    'tags' => [
-                        [
-                            'name' => 'Animals',
-                            'slug' => 'animals',
-                        ],
-                        [
-                            'name' => 'Alpaca',
-                            'slug' => 'alpaca',
-                        ]
-                    ],
-                ],
-                [
-                    'title' => 'Llamas are awesome',
-                    'headline' => 'Llamas are good, but alpacas are the best',
-                    'content' => 'Something interesting about llamas',
-                    'tags' => [
-                        [
-                            'name' => 'Animals',
-                            'slug' => 'animals',
-                        ],
-                        [
-                            'name' => 'Llama',
-                            'slug' => 'llama',
-                        ]
-                    ],
-                ]
-            ])
-        );
-        $response = $client->getResponse();
-
-        $this->assertJsonResponse($response, 201);
-        $this->assertJsonStringEqualsJsonString(
-            \json_encode(
-                [
-                    [
-                        'id' => 'a117aca5-a117-aca5-a117-aca5a117aca5',
-                        'title' => 'Alpacas are amazing',
-                        'headline' => 'Alpacas are the best',
-                        'content' => 'Something interesting about alpacas',
-                        'tags' => [
-                            [
-                                'name' => 'Animals',
-                                'slug' => 'animals',
-                            ],
-                            [
-                                'name' => 'Alpaca',
-                                'slug' => 'alpaca',
-                            ]
-                        ],
-                        'views' => null,
-                    ],
-                    [
-                        'id' => null,
-                        'title' => 'Llamas are awesome',
-                        'headline' => 'Llamas are good, but alpacas are the best',
-                        'content' => 'Something interesting about llamas',
-                        'tags' => [
-                            [
-                                'name' => 'Animals',
-                                'slug' => 'animals',
-                            ],
-                            [
-                                'name' => 'Llama',
-                                'slug' => 'llama',
-                            ]
-                        ],
-                        'views' => null,
-                    ]
-                ]
-            ),
-            $response->getContent()
-        );
+        self::assertJsonResponse($response, 201);
+        self::assertJsonStringEqualsJsonString(ObjectMother::alpacaArticleJson(), $response->getContent());
     }
 
-    public function testObjectValidationSequenceGroup1(): void
+    /**
+     * @test
+     */
+    public function it_can_deserialize_a_request_into_an_array_of_objects(): void
     {
-        $client = static::createClient();
+        $response = self::request('POST', '/api/articles/batch', ObjectMother::articlesJson());
 
-        $client->request(
-            'POST',
-            '/api/articles',
-            [],
-            [],
-            [
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            \json_encode([
-                'title' => null,
-                'tags' => null,
-            ])
-        );
-        $response = $client->getResponse();
-
-        $this->assertJsonResponse($response, 400);
-        $violations = \json_decode($response->getContent(), true);
-
-        $this->assertCount(2, $violations['violations']);
-
-        $this->assertEquals('title', $violations['violations'][0]['propertyPath']);
-        $this->assertEquals('urn:uuid:ad32d13f-c3d4-423b-909a-857b961eb720', $violations['violations'][0]['type']);
-
-        $this->assertEquals('tags', $violations['violations'][1]['propertyPath']);
-        $this->assertEquals('urn:uuid:ad32d13f-c3d4-423b-909a-857b961eb720', $violations['violations'][1]['type']);
+        self::assertJsonResponse($response, 201);
+        self::assertJsonStringEqualsJsonString(ObjectMother::articlesJson(), $response->getContent());
     }
 
-    public function testObjectValidationSequenceGroup2(): void
+    /**
+     * @test
+     */
+    public function it_can_validate_a_deserialized_object(): void
     {
-        $client = static::createClient();
+        $response = self::request('POST', '/api/articles', ObjectMother::invalidArticleJson());
 
-        $client->request(
-            'POST',
-            '/api/articles',
-            [],
-            [],
-            [
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            \json_encode([
-                'title' => 'Al',
-                'tags' => [
-                    [
-                        'name' => '',
-                        'slug' => '',
-                    ]
-                ],
-            ])
-        );
-        $response = $client->getResponse();
-
-        $this->assertJsonResponse($response, 400);
-        $violations = \json_decode($response->getContent(), true);
-
-        $this->assertCount(4, $violations['violations']);
-
-        $this->assertEquals('title', $violations['violations'][0]['propertyPath']);
-        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][0]['type']);
-
-        $this->assertEquals('tags', $violations['violations'][1]['propertyPath']);
-        $this->assertEquals('urn:uuid:bef8e338-6ae5-4caf-b8e2-50e7b0579e69', $violations['violations'][1]['type']);
-
-        $this->assertEquals('tags[0].name', $violations['violations'][2]['propertyPath']);
-        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][2]['type']);
-
-        $this->assertEquals('tags[0].slug', $violations['violations'][3]['propertyPath']);
-        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][3]['type']);
+        self::assertJsonValidationResponse($response, 2);
     }
 
-    public function testObjectCollectionValidation(): void
+    /**
+     * @test
+     */
+    public function it_can_validate_a_deserialized_array_of_objects(): void
     {
-        $client = static::createClient();
+        $response = self::request('POST', '/api/articles/batch', ObjectMother::invalidArticlesJson());
 
-        $client->request(
-            'POST',
-            '/api/articles/batch',
-            [],
-            [],
-            [
-                'CONTENT_TYPE' => 'application/json',
-            ],
-            \json_encode(
-                [
-                    [
-                        'title' => 'Al',
-                        'tags' => [
-                            [
-                                'name' => '',
-                                'slug' => 'alpaca',
-                            ]
-                        ],
-                    ],
-                    [
-                        'title' => 'L',
-                        'tags' => [
-                            [
-                                'name' => 'Animals',
-                                'slug' => 'animals',
-                            ],
-                            [
-                                'name' => 'Llama',
-                                'slug' => '',
-                            ]
-                        ],
-                    ]
-                ]
-            )
-        );
-        $response = $client->getResponse();
-
-        $this->assertJsonResponse($response, 400);
-        $violations = \json_decode($response->getContent(), true);
-
-        $this->assertCount(5, $violations['violations']);
-
-        $this->assertEquals('[0].title', $violations['violations'][0]['propertyPath']);
-        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][0]['type']);
-
-        $this->assertEquals('[0].tags', $violations['violations'][1]['propertyPath']);
-        $this->assertEquals('urn:uuid:bef8e338-6ae5-4caf-b8e2-50e7b0579e69', $violations['violations'][1]['type']);
-
-        $this->assertEquals('[0].tags[0].name', $violations['violations'][2]['propertyPath']);
-        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][2]['type']);
-
-        $this->assertEquals('[1].title', $violations['violations'][3]['propertyPath']);
-        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][3]['type']);
-
-        $this->assertEquals('[1].tags[1].slug', $violations['violations'][4]['propertyPath']);
-        $this->assertEquals('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $violations['violations'][4]['type']);
+        self::assertJsonValidationResponse($response, 4);
     }
 
-    public function testBadRequestFormat(): void
+    /**
+     * @test
+     */
+    public function it_responds_with_an_error_if_the_format_is_not_json(): void
     {
-        $client = static::createClient();
+        $response = self::request('POST', '/api/articles', '<xml></xml>', 'application/xml');
 
-        $client->request(
-            'POST',
-            '/api/articles',
-            [],
-            [],
-            [
-                'CONTENT_TYPE' => 'application/xml',
-            ],
-            \json_encode([])
-        );
-        $response = $client->getResponse();
-
-        $this->assertJsonResponse($response, 415);
+        self::assertJsonExceptionResponse($response, 415);
     }
 
-    public function testException(): void
+    /**
+     * @test
+     */
+    public function it_responds_with_an_error_if_the_json_is_malformed(): void
     {
-        $client = static::createClient();
+        $response = self::request('POST', '/api/articles', 'malformed json');
 
-        $client->request('GET', '/api/exception');
-        $response = $client->getResponse();
-
-        $this->assertExceptionJsonResponse($response, 500, 'This is an exception that was thrown from the controller');
+        self::assertJsonExceptionResponse($response, 400);
     }
 
-    public function testHttpException(): void
+    /**
+     * @test
+     */
+    public function it_can_serialize_an_exception(): void
     {
-        $client = static::createClient();
+        $response = self::request('GET', '/api/exception');
 
-        $client->request('GET', '/api/http_exception');
-        $response = $client->getResponse();
-
-        $this->assertExceptionJsonResponse($response, 405, 'This is an http exception that was thrown from the controller');
+        self::assertJsonExceptionResponse($response, 500);
     }
 
-    public function testNotJsonResponse(): void
+    /**
+     * @test
+     */
+    public function it_can_serialize_a_http_exception(): void
     {
-        $client = static::createClient();
+        $response = self::request('GET', '/api/http_exception');
 
-        $client->request('GET', '/api/not_json');
-        $response = $client->getResponse();
-
-        $this->assertEquals(201, $response->getStatusCode());
-        $this->assertNotEquals('application/json', $response->headers->get('Content-Type'));
-        $this->assertEquals('OK', $response->getContent());
+        self::assertJsonExceptionResponse($response, 403);
     }
 
-    public function testEmptyApiResponse(): void
+    /**
+     * @test
+     */
+    public function it_responds_with_the_empty_string_if_the_payload_data_is_null(): void
     {
-        $client = static::createClient();
+        $response = self::request('GET', '/api/empty_payload');
 
-        $client->request('GET', '/api/empty_api');
-        $response = $client->getResponse();
-
-        $this->assertEquals(404, $response->getStatusCode());
-        $this->assertNotEquals('application/json', $response->headers->get('Content-Type'));
-        $this->assertEquals('', $response->getContent());
+        self::assertSame(204, $response->getStatusCode());
+        self::assertNull($response->headers->get('Content-Type'));
+        self::assertSame('', $response->getContent());
     }
 
-    public function testNullResponse(): void
+    /**
+     * @test
+     */
+    public function it_can_work_with_a_invokable_controller(): void
     {
-        $client = static::createClient();
+        $response = self::request('GET', '/api/articles/best');
 
-        $client->request('GET', '/api/null');
-        $response = $client->getResponse();
-
-        $this->assertEquals(404, $response->getStatusCode());
-        $this->assertNotEquals('application/json', $response->headers->get('Content-Type'));
-        $this->assertEquals('', $response->getContent());
+        self::assertJsonResponse($response, 200);
+        self::assertJsonStringEqualsJsonString(ObjectMother::alpacaArticleJson(), $response->getContent());
     }
 
-    public function testVoidResponse(): void
+    /**
+     * @test
+     */
+    public function a_custom_header_can_be_added_to_a_payload(): void
     {
-        $client = static::createClient();
+        $response = self::request('GET', '/api/articles/1');
 
-        $client->request('GET', '/api/void');
-        $response = $client->getResponse();
-
-        $this->assertEquals(404, $response->getStatusCode());
-        $this->assertNotEquals('application/json', $response->headers->get('Content-Type'));
-        $this->assertEquals('', $response->getContent());
-    }
-
-    public function testInvocableController(): void
-    {
-        $client = static::createClient();
-
-        $client->request('GET', '/api/notes/1');
-        $response = $client->getResponse();
-
-        $this->assertJsonResponse($response, 200);
-        $this->assertJsonStringEqualsJsonString(
-            \json_encode([
-                'id' => 'a117aca5-a117-aca5-a117-aca5a117aca5',
-                'title' => 'Note about alpacas',
-                'text' => 'The alpaca is a species of South American camelid descended from the vicuña',
-                'views' => 47,
-            ]),
-            $response->getContent()
-        );
-    }
-
-    private function assertExceptionJsonResponse(Response $response, int $statusCode, string $message): void
-    {
-        $this->assertJsonResponse($response, $statusCode);
-        $exception = \json_decode($response->getContent(), true);
-        $this->assertIsArray($exception[0] ?? null);
-        $this->assertEquals($message, $exception[0]['message']);
-        $this->assertIsString($exception[0]['class']);
-        $this->assertIsArray($exception[0]['trace']);
-    }
-
-    private function assertJsonResponse(Response $response, int $statusCode): void
-    {
-        $this->assertEquals($statusCode, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->headers->get('Content-Type'));
-        $this->assertJson($response->getContent());
+        self::assertSame('Value', $response->headers->get('Awesome-Header'));
     }
 }

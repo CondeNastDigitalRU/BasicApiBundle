@@ -3,17 +3,34 @@
 namespace Condenast\BasicApiBundle\Tests\Fixtures\App\Controller;
 
 use Condenast\BasicApiBundle\Annotation as Api;
-use Condenast\BasicApiBundle\Request\QueryParamFetcher;
-use Condenast\BasicApiBundle\Response\ApiResponse;
-use Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article;
-use Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Tag;
-use Ramsey\Uuid\Uuid;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Condenast\BasicApiBundle\Request\QueryParamBag;
+use Condenast\BasicApiBundle\Response\Payload;
+use Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article;
+use Condenast\BasicApiBundle\Tests\Functional\ObjectMother;
+use Nelmio\ApiDocBundle\Annotation as Nelmio;
+use OpenApi\Annotations as OA;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ApiController
 {
+    /**
+     * Query params
+     *
+     * @Route(
+     *     "/query_params",
+     *     name="app.query_params",
+     *     methods={"GET"},
+     * )
+     * @Api\Resource("Query params")
+     * @Api\QueryParam(name="string", path="filter[string]", type="string", default="default", description="String"),
+     * @Api\QueryParam(name="strings", path="filter[strings]", type="string", map=true)
+     */
+    public function queryParams(QueryParamBag $query): Payload
+    {
+        return new Payload($query->all());
+    }
+
     /**
      * Get article
      *
@@ -23,17 +40,19 @@ class ApiController
      *     methods={"GET"},
      *     requirements={"id": "\d+"}
      * )
-     * @Api\Action(
-     *     resourceName="Article",
-     *     response=@Api\Response(
-     *         type=Article::class,
-     *         context={"groups": "article.detail"}
+     * @Api\Resource("Article")
+     * @OA\Response(
+     *     response=200,
+     *     description="Article",
+     *     @OA\JsonContent(
+     *         type="object",
+     *         ref=@Nelmio\Model(type=Article::class, groups={"article.read"})
      *     )
      * )
      */
-    public function getArticle(): ApiResponse
+    public function getArticle(): Payload
     {
-        return new ApiResponse($this->createAlpacaArticle());
+        return new Payload(ObjectMother::alpacaArticle(), 200, ['groups' => 'article.read'], ['Awesome-Header' => 'Value']);
     }
 
     /**
@@ -44,23 +63,19 @@ class ApiController
      *     name="app.articles.cget",
      *     methods={"GET"}
      * )
-     * @Api\Action(
-     *     resourceName="Article",
-     *     response=@Api\Response(
-     *         type="Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article[]",
-     *         context={"groups": "article.list"}
+     * @Api\Resource("Article")
+     * @OA\Response(
+     *     response=200,
+     *     description="Articles",
+     *     @OA\JsonContent(
+     *         type="array",
+     *         @OA\Items(ref=@Nelmio\Model(type=Article::class, groups={"article.read"}))
      *     )
      * )
      */
-    public function getArticles(QueryParamFetcher $queryParamFetcher): array
+    public function getArticles(): Payload
     {
-        // Just for example and checking autowiring
-        $ids = $queryParamFetcher->get('filter', '[ids]', QueryParamFetcher::TYPE_INT, true);
-
-        return [
-            $this->createAlpacaArticle(),
-            $this->createLlamaArticle(),
-        ];
+        return new Payload(ObjectMother::articles(), 200, ['groups' => 'article.read']);
     }
 
     /**
@@ -71,29 +86,21 @@ class ApiController
      *     name="app.articles.post",
      *     methods={"POST"}
      * )
-     * @Api\Action(
-     *     resourceName="Article",
-     *     request=@Api\Request(
-     *         argument="article",
-     *         type=Article::class,
-     *         context={
-     *             "groups": "article.write",
-     *         },
-     *         validation=@Api\Validation(
-     *             groups={"article.types", "article.write"},
-     *             sequence=true
-     *         )
-     *     ),
-     *     response=@Api\Response(
-     *         type=Article::class,
-     *         context={"groups": "article.detail"},
-     *         statusCode=201
+     * @Api\Resource("Article")
+     * @Api\Deserialization(argument="article", type=Article::class, context={"groups": "article.write"})
+     * @Api\Validation(groups={"article.write"})
+     * @OA\Response(
+     *     response=201,
+     *     description="Created article",
+     *     @OA\JsonContent(
+     *         type="object",
+     *         ref=@Nelmio\Model(type=Article::class, groups={"article.read"})
      *     )
      * )
      */
-    public function postArticle(Article $article): Article
+    public function postArticle(Article $article): Payload
     {
-        return $article;
+        return new Payload($article, 201, ['groups' => 'article.read']);
     }
 
     /**
@@ -104,31 +111,26 @@ class ApiController
      *     name="app.articles.post.batch",
      *     methods={"POST"}
      * )
-     * @Api\Action(
-     *     resourceName="Article",
-     *     request=@Api\Request(
-     *         argument="articles",
-     *         type="Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article[]",
-     *         context={
-     *             "groups": "article.write",
-     *         },
-     *         validation=@Api\Validation(
-     *             groups={"article.types", "article.write"},
-     *             sequence=true
-     *         )
-     *     ),
-     *     response=@Api\Response(
-     *         type="Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Article[]",
-     *         context={"groups": "article.detail"},
-     *         statusCode=201
+     * @Api\Resource("Article")
+     * @Api\Deserialization(
+     *     argument="articles",
+     *     type="Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article[]",
+     *     context={"groups": "article.write"}
+     * )
+     * @Api\Validation(groups={"article.write"})
+     * @OA\Response(
+     *     response=200,
+     *     description="Articles",
+     *     @OA\JsonContent(
+     *         type="array",
+     *         @OA\Items(ref=@Nelmio\Model(type=Article::class, groups={"article.read"}))
      *     )
      * )
-     * @param Article[] $articles
-     * @return Article[]
+     * @param list<Article> $articles
      */
-    public function postArticleBatch(array $articles): array
+    public function postArticleBatch(array $articles): Payload
     {
-        return $articles;
+        return new Payload($articles, 201, ['groups' => 'article.read']);
     }
 
     /**
@@ -139,13 +141,11 @@ class ApiController
      *     name="app.exception",
      *     methods={"GET"}
      * )
-     * @Api\Action(
-     *     resourceName="Exception"
-     * )
+     * @Api\Resource("Exception")
      */
     public function throwException(): void
     {
-        throw new \Exception('This is an exception that was thrown from the controller');
+        throw new \RuntimeException('Message');
     }
 
     /**
@@ -156,130 +156,25 @@ class ApiController
      *     name="app.http_exception",
      *     methods={"GET"}
      * )
-     * @Api\Action(
-     *     resourceName="Exception"
-     * )
+     * @Api\Resource("Exception")
      */
     public function throwHttpException(): void
     {
-        throw new MethodNotAllowedHttpException([], 'This is an http exception that was thrown from the controller');
+        throw new AccessDeniedHttpException('Access denied');
     }
 
     /**
-     * Not json response
+     * Empty payload
      *
      * @Route(
-     *     "/not_json",
-     *     name="app.not_json",
+     *     "/empty_payload",
+     *     name="app.empty_payload",
      *     methods={"GET"}
      * )
-     * @Api\Action(
-     *     resourceName="Not JSON"
-     * )
+     * @Api\Resource("Emtpty payload")
      */
-    public function notJsonResponse(): Response
+    public function emptyPayload(): Payload
     {
-        return new Response('OK', 201);
-    }
-
-    /**
-     * Empty api response
-     *
-     * @Route(
-     *     "/empty_api",
-     *     name="app.empty_api",
-     *     methods={"GET"}
-     * )
-     * @Api\Action(
-     *     resourceName="Emtpty api",
-     *     response=@Api\Response(
-     *         statusCode=404
-     *     )
-     * )
-     */
-    public function emptyApiResponse(): Response
-    {
-        return new ApiResponse();
-    }
-
-    /**
-     * Null response
-     *
-     * @Route(
-     *     "/null",
-     *     name="app.null",
-     *     methods={"GET"}
-     * )
-     * @Api\Action(
-     *     resourceName="Null",
-     *     response=@Api\Response(
-     *         statusCode=404
-     *     )
-     * )
-     */
-    public function nullResponse()
-    {
-        return null;
-    }
-
-    /**
-     * Void response
-     *
-     * @Route(
-     *     "/void",
-     *     name="app.void",
-     *     methods={"GET"}
-     * )
-     * @Api\Action(
-     *     resourceName="Void",
-     *     response=@Api\Response(
-     *         statusCode=404
-     *     )
-     * )
-     */
-    public function voidResponse(): void
-    {
-    }
-
-    private function createAlpacaArticle(): Article
-    {
-        $tag1 = new Tag();
-        $tag1->name = 'Animals';
-        $tag1->slug = 'animals';
-
-        $tag2 = new Tag();
-        $tag2->name = 'Alpaca';
-        $tag2->slug = 'alpaca';
-
-        $article = new Article();
-        $article->id = Uuid::fromString('a117aca5-a117-aca5-a117-aca5a117aca5');
-        $article->title = 'Alpacas are amazing';
-        $article->headline = 'Alpacas are the best';
-        $article->content = 'Something interesting about alpacas';
-        $article->views = 47;
-        $article->tags = [$tag1, $tag2];
-
-        return $article;
-    }
-
-    private function createLlamaArticle(): Article
-    {
-        $tag1 = new Tag();
-        $tag1->name = 'Animals';
-        $tag1->slug = 'animals';
-
-        $tag2 = new Tag();
-        $tag2->name = 'Llama';
-        $tag2->slug = 'llama';
-
-        $article = new Article();
-        $article->id = Uuid::fromString('11a111a5-11a1-11a5-11a1-11a511a111a5');
-        $article->title = 'Llamas are awesome';
-        $article->headline = 'Llamas are good, but alpacas are the best';
-        $article->content = 'Something interesting about llamas';
-        $article->views = 17;
-        $article->tags = [$tag1, $tag2];
-
-        return $article;
+        return new Payload(null, 204);
     }
 }

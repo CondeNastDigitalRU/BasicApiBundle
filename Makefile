@@ -4,9 +4,9 @@ include Make.config
 php-cs-fixer:
 	$(BIN_DIR)/php-cs-fixer fix --dry-run --verbose --diff
 
-.PHONY: phpstan
-phpstan:
-	$(BIN_DIR)/phpstan analyse --configuration phpstan.neon --level=max --no-progress src
+.PHONY: psalm
+psalm:
+	$(BIN_DIR)/psalm --no-cache
 
 .PHONY: phpunit
 phpunit: export APP_ENV=test
@@ -15,7 +15,7 @@ phpunit:
 	$(BIN_DIR)/simple-phpunit
 
 .PHONY: tests
-tests: php-cs-fixer phpstan phpunit
+tests: php-cs-fixer psalm phpunit
 
 .PHONY: server
 server: export APP_ENV=dev

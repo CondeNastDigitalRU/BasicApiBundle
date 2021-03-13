@@ -5,5 +5,5 @@
 /.travis.yml export-ignore
 /Make.config export-ignore
 /Makefile export-ignore
-/phpstan.neon export-ignore
+/psalm.xml export-ignore
 /phpunit.xml export-ignore

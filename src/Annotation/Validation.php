@@ -4,33 +4,29 @@ namespace Condenast\BasicApiBundle\Annotation;
 
 /**
  * @Annotation
- * @Target("ANNOTATION")
+ * @Target("METHOD")
  * @Attributes({
- *     @Attribute("groups", type="array<string>"),
- *     @Attribute("sequence", type="bool")
+ *     @Attribute("groups", type="array<string>")
  * })
  */
 class Validation
 {
-    /** @var array<string> */
+    /** @var list<string> */
     private $groups;
 
-    /** @var bool */
-    private $sequence;
-
+    /**
+     * @param array{groups: list<string>} $values
+     */
     public function __construct(array $values)
     {
         $this->groups = $values['groups'] ?? [];
-        $this->sequence = $values['sequence'] ?? false;
     }
 
+    /**
+     * @return array<string>
+     */
     public function getGroups(): array
     {
         return $this->groups;
-    }
-
-    public function isSequence(): bool
-    {
-        return $this->sequence;
     }
 }

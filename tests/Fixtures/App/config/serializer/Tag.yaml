@@ -1,10 +1,10 @@
-Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Tag:
+Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Tag:
     attributes:
         name:
             groups:
-                - article.detail
+                - article.read
                 - article.write
         slug:
             groups:
-                - article.detail
+                - article.read
                 - article.write

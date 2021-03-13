@@ -2,6 +2,8 @@
 
 namespace Condenast\BasicApiBundle\EventListener;
 
+use Condenast\BasicApiBundle\Annotation\Deserialization;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -9,10 +11,8 @@ use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 
-class RequestDeserializationSubscriber implements ApiEventSubscriberInterface
+class RequestDeserializationSubscriber implements EventSubscriberInterface
 {
-    use ApiEventSubscriberTrait;
-
     /** @var SerializerInterface */
     private $serializer;
 
@@ -31,33 +31,33 @@ class RequestDeserializationSubscriber implements ApiEventSubscriberInterface
     public function onKernelController(ControllerEvent $event): void
     {
         $request = $event->getRequest();
+        /** @var Deserialization|null $deserialization */
+        $deserialization = $request->attributes->get(RequestConfigurationSubscriber::ATTRIBUTE_API_DESERIALIZATION);
 
-        /** @var string $content */
-        $content = $request->getContent();
-
-        if (
-            '' === $content
-            || !$this->isApiRequest($request)
-            || !$this->isRequestDeserializationEnabled($request)
-            || !$this->canRequestHaveBody($request)
-        ) {
+        if (null === $deserialization) {
             return;
         }
 
+        $argument = $deserialization->getArgument();
+
+        if ($request->attributes->has($argument)) {
+            throw new \RuntimeException(\sprintf('An attribute with name "%s" is already present in the request', $argument));
+        }
+
         try {
-            $this->setControllerArgument(
-                $request,
-                $this->serializer->deserialize(
-                    $content,
-                    $this->getRequestDeserializationType($request),
-                    'json',
-                    $this->getRequestDeserializationContext($request)
-                )
+            /** @var object|list<object> $deserialized */
+            $deserialized = $this->serializer->deserialize(
+                $request->getContent(),
+                $deserialization->getType(),
+                'json',
+                $deserialization->getContext()
             );
         } catch (NotEncodableValueException $e) {
             throw new BadRequestHttpException('Request does not contain valid json', $e);
         } catch (ExceptionInterface|\TypeError $e) {
             throw new BadRequestHttpException('Request can\'t be deserialized', $e);
         }
+
+        $request->attributes->set($argument, $deserialized);
     }
 }
