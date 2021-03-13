@@ -1,9 +1,9 @@
 language: php
 
 php:
-    - 7.2
     - 7.3
     - 7.4
+    - 8.0
 
 env:
     matrix:
@@ -24,6 +24,6 @@ jobs:
           env: COMPOSER_FLAGS='--prefer-stable'
           script:
               - make php-cs-fixer
-              - make phpstan
+              - make psalm
 script:
     - make phpunit

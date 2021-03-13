@@ -2,185 +2,108 @@
 
 namespace Condenast\BasicApiBundle\Tests\Unit\EventListener;
 
-use Condenast\BasicApiBundle\EventListener\ApiEventSubscriberInterface;
 use Condenast\BasicApiBundle\EventListener\RequestDeserializationSubscriber;
-use PHPUnit\Framework\MockObject\MockObject;
+use Condenast\BasicApiBundle\Tests\Unit\ObjectMother;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 
-class RequestDeserializationSubscriberTest extends TestCase
+final class RequestDeserializationSubscriberTest extends TestCase
 {
-    use EventSubscriberTestTrait;
-
     /**
-     * @dataProvider onKernelControllerProvider
+     * @test
      */
-    public function testOnKernelController(string $method, $content, array $attributes, bool $deserialize, $deserialized): void
+    public function it_deserializes_the_request_and_sets_the_appropriate_attribute(): void
     {
-        /** @var SerializerInterface|MockObject $serializer */
-        $serializer = $this->createMock(SerializerInterface::class);
-        $attributesBag = $this->createParameterBagMock($attributes);
-        $request = $this->createRequestMock($method, $content, null, $attributesBag);
-        $event = $this->createControllerEventMock($request);
+        $deserialization = ObjectMother::deserialization();
+        $request = ObjectMother::deserializationRequest($deserialization);
+        $event = ObjectMother::controllerEvent($request);
 
-        if ($deserialize) {
-            $serializer
-                ->expects($this->once())
-                ->method('deserialize')
-                ->with(
-                    $content,
-                    $attributes[ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_TYPE],
-                    'json',
-                    $attributes[ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_CONTEXT] ?? []
-                )
-                ->willReturn($deserialized)
-            ;
-
-            $attributesBag
-                ->expects($this->once())
-                ->method('set')
-                ->with($attributes[ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT], $deserialized);
-        } else {
-            $serializer
-                ->expects($this->never())
-                ->method('deserialize');
-        }
-
-        $subscriber = new RequestDeserializationSubscriber($serializer);
-        $subscriber->onKernelController($event);
-    }
-
-    public function onKernelControllerProvider(): array
-    {
-        return [
-            // string $method, $content, array $attributes, array $attributesExpected, bool $deserialize, $deserialized
-            'API POST request with deserialization enabled and not empty content' => [
-                'POST',
-                '[]',
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_TYPE => \stdClass::class,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_CONTEXT => ['groups' => ['group']],
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                ],
-                true,
-                new \stdClass()
-            ],
-            'API PUT request with deserialization enabled but without deserialization context and not empty content' => [
-                'PUT',
-                '[]',
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_TYPE => \stdClass::class,
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                ],
-                true,
-                new \stdClass()
-            ],
-            'API PATCH request with deserialization enabled and not empty content' => [
-                'PATCH',
-                '[]',
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_TYPE => \stdClass::class,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_CONTEXT => ['groups' => ['group']],
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                ],
-                true,
-                new \stdClass()
-            ],
-            'API DELETE request with deserialization enabled and not empty content' => [
-                'DELETE',
-                '[]',
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_TYPE => \stdClass::class,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_CONTEXT => ['groups' => ['group']],
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                ],
-                true,
-                new \stdClass()
-            ],
-            'API POST request with content and deserialization disabled' => [
-                'POST',
-                '[]',
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZE => null,
-                ],
-                false,
-                null
-            ],
-            'API POST request with deserialization enabled and empty content' => [
-                'POST',
-                '',
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZE => true,
-                ],
-                false,
-                null
-            ],
-            'Not API POST request with deserialization enabled and not empty content' => [
-                'POST',
-                '[]',
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => false,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZE => true,
-                ],
-                false,
-                null
-            ],
-            'API GET request with deserialization enabled and not empty content' => [
-                'GET',
-                '[]',
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZE => true,
-                ],
-                false,
-                new \stdClass()
-            ],
-        ];
-    }
-
-    /**
-     * @dataProvider onKernelControllerSerializerExceptionsProvider
-     */
-    public function testOnKernelControllerSerializerException(\Throwable $serializerException, string $subscriberException, string $subscriberExceptionMessage): void
-    {
-        /** @var SerializerInterface|MockObject $serializer */
+        $deserialized = ['data'];
         $serializer = $this->createMock(SerializerInterface::class);
         $serializer
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('deserialize')
-            ->willThrowException($serializerException);
-
-        $attributesBag = $this->createParameterBagMock([
-            ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-            ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZE => true,
-            ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_TYPE => \stdClass::class,
-            ApiEventSubscriberInterface::ATTRIBUTE_DESERIALIZATION_CONTEXT => ['groups' => ['group']],
-            ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-        ]);
-        $request = $this->createRequestMock('POST', '[]', null, $attributesBag);
-        $event = $this->createControllerEventMock($request);
-
-        $this->expectException($subscriberException);
-        $this->expectExceptionMessage($subscriberExceptionMessage);
+            ->with($request->getContent(), $deserialization->getType(), 'json', $deserialization->getContext())
+            ->willReturn($deserialized);
 
         $subscriber = new RequestDeserializationSubscriber($serializer);
+
+        $subscriber->onKernelController($event);
+
+        self::assertSame($request->attributes->get($deserialization->getArgument()), $deserialized);
+    }
+
+    /**
+     * @test
+     */
+    public function it_skips_if_there_is_no_deserialization_annotation_in_request(): void
+    {
+        $request = ObjectMother::deserializationRequest();
+        $attributes = $request->attributes->all();
+        $event = ObjectMother::controllerEvent($request);
+
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer
+            ->expects(self::never())
+            ->method('deserialize');
+
+        $subscriber = new RequestDeserializationSubscriber($serializer);
+
+        $subscriber->onKernelController($event);
+
+        self::assertSame($attributes, $request->attributes->all());
+    }
+
+    /**
+     * @test
+     */
+    public function if_the_attribute_is_already_set_then_this_will_result_in_an_error(): void
+    {
+        $deserialization = ObjectMother::deserialization();
+        $event = ObjectMother::controllerEvent(ObjectMother::deserializationRequest($deserialization, null, [$deserialization->getArgument() => 'value']));
+
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer
+            ->expects(self::never())
+            ->method('deserialize');
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(\sprintf('An attribute with name "%s" is already present in the request', $deserialization->getArgument()));
+
+        $subscriber = new RequestDeserializationSubscriber($serializer);
+
         $subscriber->onKernelController($event);
     }
 
-    public function onKernelControllerSerializerExceptionsProvider(): array
+
+    /**
+     * @test
+     * @dataProvider serializerExceptions
+     */
+    public function it_can_handle_serializer_exceptions(
+        \Throwable $serializerException,
+        string $expectedException,
+        string $expectedExceptionMessage
+    ): void {
+        $deserialization = ObjectMother::deserialization();
+        $request = ObjectMother::deserializationRequest($deserialization);
+        $event = ObjectMother::controllerEvent($request);
+
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer->method('deserialize')->willThrowException($serializerException);
+
+        $this->expectException($expectedException);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+
+        $subscriber = new RequestDeserializationSubscriber($serializer);
+
+        $subscriber->onKernelController($event);
+    }
+
+    public function serializerExceptions(): array
     {
         return [
             [$this->createMock(NotEncodableValueException::class), BadRequestHttpException::class, 'Request does not contain valid json'],

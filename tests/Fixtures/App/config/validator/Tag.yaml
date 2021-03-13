@@ -1,30 +1,14 @@
-Condenast\BasicApiBundle\Tests\Fixtures\App\Entity\Tag:
+Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Tag:
     properties:
         name:
-            -   NotNull:
-                    groups:
-                        - article.types
-            -   Type:
-                    groups:
-                        - article.types
-                    type: string
             -   Length:
                     groups:
                         - article.write
-                    allowEmptyString: false
                     min: 1
                     max: 255
         slug:
-            -   NotNull:
-                    groups:
-                        - article.types
-            -   Type:
-                    groups:
-                        - article.types
-                    type: string
             -   Length:
                     groups:
                         - article.write
-                    allowEmptyString: false
                     min: 1
                     max: 255

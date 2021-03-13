@@ -7,3 +7,6 @@ services:
     Condenast\BasicApiBundle\Tests\Fixtures\App\Controller\:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
+
+    logger:
+        class: Psr\Log\NullLogger

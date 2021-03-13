@@ -5,3 +5,5 @@ framework:
         storage_id: session.storage.mock_file
     annotations:
         cache: file
+    router:
+        utf8: true

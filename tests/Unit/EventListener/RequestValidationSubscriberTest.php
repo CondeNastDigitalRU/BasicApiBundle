@@ -2,157 +2,106 @@
 
 namespace Condenast\BasicApiBundle\Tests\Unit\EventListener;
 
-use Condenast\BasicApiBundle\EventListener\ApiEventSubscriberInterface;
 use Condenast\BasicApiBundle\EventListener\RequestValidationSubscriber;
-use Condenast\BasicApiBundle\Response\ApiResponse;
-use PHPUnit\Framework\MockObject\MockObject;
+use Condenast\BasicApiBundle\Response\Payload;
+use Condenast\BasicApiBundle\Tests\Unit\ObjectMother;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Validator\Constraints\GroupSequence;
-use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class RequestValidationSubscriberTest extends TestCase
+final class RequestValidationSubscriberTest extends TestCase
 {
-    use EventSubscriberTestTrait;
-
     /**
-     * @dataProvider onKernelControllerProvider
+     * @test
      */
-    public function testOnKernelController(array $attributes, bool $validate, int $violationsCount): void
+    public function it_can_validate_the_value_deserialized_from_the_request(): void
     {
-        /** @var ValidatorInterface|MockObject $validator */
+        $deserialization = ObjectMother::deserialization();
+        $validation = ObjectMother::validation();
+        $deserialized = new \stdClass();
+        $event = ObjectMother::controllerEvent(
+            ObjectMother::deserializationRequest($deserialization, $validation, [$deserialization->getArgument() => $deserialized])
+        );
+
+        $violations = ObjectMother::constraintViolationList();
         $validator = $this->createMock(ValidatorInterface::class);
-        $attributesBag = $this->createParameterBagMock($attributes);
-        $request = $this->createRequestMock('POST', '', null, $attributesBag);
-        $event = $this->createControllerEventMock($request);
-
-        $violations = $this->createMock(ConstraintViolationListInterface::class);
-        $violations
-            ->method('count')
-            ->willReturn($violationsCount);
-
-        if ($validate) {
-            $deserialized = $attributes[$attributes[ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT]];
-
-            $validator
-                ->expects($this->once())
-                ->method('validate')
-                ->with(
-                    $deserialized,
-                    null,
-                    $this->callback(static function ($groups) use ($attributes) {
-                        if (true === ($attributes[ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUP_SEQUENCE] ?? false)) {
-                            return $groups instanceof GroupSequence && $groups->groups === ($attributes[ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS] ?? []);
-                        }
-
-                        return $groups === ($attributes[ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS] ?? []);
-                    })
-                )
-                ->willReturn($violations);
-
-            if ($violationsCount > 0) {
-                $event
-                    ->expects($this->once())
-                    ->method('setController')
-                    ->with($this->callback(static function ($controller) use ($violations) {
-                        return \is_callable($controller)
-                            && ($apiResponse = $controller()) instanceof ApiResponse
-                            && $apiResponse->getData() === $violations;
-                    }));
-                $attributesBag
-                    ->expects($this->once())
-                    ->method('set')
-                    ->with(ApiEventSubscriberInterface::ATTRIBUTE_SERIALIZATION_CONTEXT, []);
-            }
-        } else {
-            $validator
-                ->expects($this->never())
-                ->method('validate');
-        }
+        $validator
+            ->expects(self::once())
+            ->method('validate')
+            ->with($deserialized, null, $validation->getGroups())
+            ->willReturn($violations);
 
         $subscriber = new RequestValidationSubscriber($validator);
+
         $subscriber->onKernelController($event);
+
+        $controller = $event->getController();
+        /** @var Payload $payload */
+        $payload = $controller();
+
+        self::assertInstanceOf(\Closure::class, $controller);
+        self::assertInstanceOf(Payload::class, $payload);
+        self::assertSame(400, $payload->getStatus());
+        self::assertSame($violations, $payload->getData());
     }
 
-    public function onKernelControllerProvider(): array
+    /**
+     * @test
+     * @dataProvider skippedRequests
+     */
+    public function it_skips_if_the_request_does_not_meet_the_requirements(Request $request): void
+    {
+        $event = ObjectMother::controllerEvent($request);
+        $controller = $event->getController();
+
+        $validator = $this->createMock(ValidatorInterface::class);
+        $validator
+            ->expects(self::never())
+            ->method('validate');
+
+        $subscriber = new RequestValidationSubscriber($validator);
+
+        $subscriber->onKernelController($event);
+
+        self::assertSame($controller, $event->getController());
+    }
+
+    /**
+     * @test
+     */
+    public function it_skips_if_there_are_no_validation_errors(): void
+    {
+        $event = ObjectMother::controllerEvent(ObjectMother::deserializationRequest(
+            ObjectMother::deserialization(),
+            ObjectMother::validation(),
+            [ObjectMother::deserialization()->getArgument() => 'value']
+        ));
+        $controller = $event->getController();
+
+        $validator = $this->createMock(ValidatorInterface::class);
+        $validator
+            ->method('validate')
+            ->willReturn(ObjectMother::emptyConstraintViolationList());
+
+        $subscriber = new RequestValidationSubscriber($validator);
+
+        $subscriber->onKernelController($event);
+
+        self::assertSame($controller, $event->getController());
+    }
+
+    public function skippedRequests(): array
     {
         return [
-            'API request with validation enabled, not empty argument and validation errors' => [
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS => ['group'],
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                    'value' => new \stdClass(),
-                ],
-                true,
-                1
+            'Request without deserialization annotation' => [ObjectMother::deserializationRequest(null, ObjectMother::validation())],
+            'Request without validation annotation' => [
+                ObjectMother::deserializationRequest(
+                    ObjectMother::deserialization(),
+                    null,
+                    [ObjectMother::deserialization()->getArgument() => 'value']
+                )
             ],
-            'API request with validation and group sequence enabled, not empty argument and validation errors' => [
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS => ['group'],
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUP_SEQUENCE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                    'value' => new \stdClass(),
-                ],
-                true,
-                1
-            ],
-            'API request with validation enabled, without validation groups, not empty array argument and validation errors' => [
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                    'value' => [new \stdClass()],
-                ],
-                true,
-                1
-            ],
-            'API request with validation enabled, not empty argument and no validation errors' => [
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS => ['group'],
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                    'value' => new \stdClass(),
-                ],
-                true,
-                0
-            ],
-            'API request with validation enabled and empty argument' => [
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS => ['group'],
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                    'value' => null,
-                ],
-                false,
-                0
-            ],
-            'API request with validation disabled' => [
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => false,
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                    'value' => new \stdClass(),
-                ],
-                false,
-                0
-            ],
-            'Not API request with validation enabled and not empty argument' => [
-                [
-                    ApiEventSubscriberInterface::ATTRIBUTE_API => null,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATE => true,
-                    ApiEventSubscriberInterface::ATTRIBUTE_VALIDATION_GROUPS => ['group'],
-                    ApiEventSubscriberInterface::ATTRIBUTE_CONTROLLER_ARGUMENT => 'value',
-                    'value' => null,
-                ],
-                false,
-                0
-            ]
+            'Request without deserialized value' => [ObjectMother::deserializationRequest(ObjectMother::deserialization(), ObjectMother::validation())],
         ];
     }
 }

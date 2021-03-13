@@ -1,4 +1,8 @@
 nelmio_api_doc:
     areas:
         path_patterns:
-            - ^\/api(?!\/doc(\.json)?$)
+            - ^\/api(?!\/doc)
+    documentation:
+        info:
+            title: BasicApiBundle
+            version: 2.x

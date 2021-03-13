@@ -2,26 +2,29 @@
 
 namespace Condenast\BasicApiBundle\ApiDoc;
 
-use Condenast\BasicApiBundle\Annotation\Action as ActionAnnotation;
+use Condenast\BasicApiBundle\Annotation\Deserialization;
+use Condenast\BasicApiBundle\Annotation\QueryParam;
+use Condenast\BasicApiBundle\Annotation\Resource;
+use Condenast\BasicApiBundle\Annotation\Validation;
 use Doctrine\Common\Annotations\Reader;
-use EXSyst\Component\Swagger\Operation;
-use EXSyst\Component\Swagger\Schema;
-use EXSyst\Component\Swagger\Swagger;
 use Nelmio\ApiDocBundle\Describer\ModelRegistryAwareInterface;
-use Nelmio\ApiDocBundle\Describer\ModelRegistryAwareTrait;
 use Nelmio\ApiDocBundle\Model\Model;
+use Nelmio\ApiDocBundle\Model\ModelRegistry;
+use Nelmio\ApiDocBundle\OpenApiPhp\Util;
 use Nelmio\ApiDocBundle\RouteDescriber\RouteDescriberInterface;
 use Nelmio\ApiDocBundle\RouteDescriber\RouteDescriberTrait;
 use Nelmio\ApiDocBundle\Util\ControllerReflector;
-use Symfony\Component\HttpFoundation\Response as HttpResponse;
+use OpenApi\Annotations as OA;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
+/**
+ * @psalm-suppress PropertyNotSetInConstructor
+ */
 class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareInterface
 {
     use RouteDescriberTrait;
-    use ModelRegistryAwareTrait;
 
     /** @var Reader */
     private $annotationReader;
@@ -29,90 +32,157 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     /** @var ControllerReflector */
     private $controllerReflector;
 
+    /** @var ModelRegistry */
+    private $modelRegistry;
+
     public function __construct(Reader $annotationReader, ControllerReflector $controllerReflector)
     {
         $this->annotationReader = $annotationReader;
         $this->controllerReflector = $controllerReflector;
     }
 
-    public function describe(Swagger $api, Route $route, \ReflectionMethod $reflectionMethod): void
+    public function setModelRegistry(ModelRegistry $modelRegistry): void
     {
-        $actionAnnotation = $this->getActionAnnotation($route);
+        $this->modelRegistry = $modelRegistry;
+    }
 
-        if (null === $actionAnnotation) {
+    public function describe(OA\OpenApi $api, Route $route, \ReflectionMethod $reflectionMethod): void
+    {
+        $controller = $route->getDefault('_controller');
+
+        if (!\is_string($controller)) {
             return;
         }
 
+        /**
+         * @psalm-suppress InternalMethod
+         * @var \ReflectionMethod|null
+         */
+        $methodReflection = $this->controllerReflector->getReflectionMethod($controller);
+
+        if (null === $methodReflection) {
+            return;
+        }
+
+        /** @var Resource|null $resource */
+        $resource = $this->annotationReader->getMethodAnnotation($methodReflection, Resource::class);
+        /** @var Deserialization|null $deserialization */
+        $deserialization = $this->annotationReader->getMethodAnnotation($methodReflection, Deserialization::class);
+        /** @var Validation|null $validation */
+        $validation = $this->annotationReader->getMethodAnnotation($methodReflection, Validation::class);
+        /** @var list<QueryParam> $queryParameters */
+        $queryParameters = \array_filter(
+            $this->annotationReader->getMethodAnnotations($methodReflection),
+            static function (object $annotation): bool {
+                return $annotation instanceof QueryParam;
+            }
+        );
+
+        /** @psalm-suppress InternalMethod */
         foreach ($this->getOperations($api, $route) as $operation) {
-            $this->describeOperation($operation, $actionAnnotation);
+            null !== $resource && $this->describeOperation($operation, $resource);
+            null !== $deserialization && $this->describeRequestBody($operation, $deserialization);
+            null !== $deserialization && null !== $validation && $this->describeValidationResponse($operation);
+            $this->describeQueryParams($operation, $queryParameters);
         }
     }
 
-    private function describeOperation(Operation $operation, ActionAnnotation $actionAnnotation): void
+    private function describeOperation(OA\Operation $operation, Resource $resource): void
     {
-        if (null !== $actionAnnotation->getResourceName()) {
-            $operation->merge(['tags' => [$actionAnnotation->getResourceName()]]);
-        }
+        Util::merge(
+            $operation,
+            [
+                'tags' => [$resource->getName()],
+                'operationId' => \sprintf('%s %s', $operation->method, $operation->path),
+            ]
+        );
+    }
 
-        if (empty($operation->getConsumes())) {
-            $operation->merge(['consumes' => ['application/json']]);
-        }
+    private function describeRequestBody(OA\Operation $operation, Deserialization $deserialization): void
+    {
+        /** @var list<string> $groups */
+        $groups = (array) ($deserialization->getContext()['groups'] ?? []);
 
-        if (empty($operation->getProduces())) {
-            $operation->merge(['produces' => ['application/json']]);
-        }
+        /** @psalm-suppress ArgumentTypeCoercion */
+        $this->describeMediaType(
+            Util::getChild($operation, OA\RequestBody::class),
+            $deserialization->getType(),
+            $groups
+        );
+    }
 
-        $requestAnnotation = $actionAnnotation->getRequest();
-        if (null !== $requestAnnotation) {
-            if (!$operation->getParameters()->has('body', 'body')) {
-                $body = $operation->getParameters()->get('body', 'body');
+    private function describeValidationResponse(OA\Operation $operation): void
+    {
+        /** @var OA\Response $response */
+        $response = Util::getIndexedCollectionItem($operation, OA\Response::class, 400);
+        Util::merge($response, ['description' => 'Bad request']);
 
-                $groups = (array)($requestAnnotation->getContext()['groups'] ?? []);
+        $this->describeMediaType(
+            $response,
+            ConstraintViolationListInterface::class
+        );
+    }
 
-                $this->describeSchema(
-                    $body->getSchema(),
-                    $requestAnnotation->getType(),
-                    !empty($groups) ? $groups : null
-                );
+    /**
+     * @param list<QueryParam> $queryParams
+     */
+    private function describeQueryParams(OA\Operation $operation, array $queryParams): void
+    {
+        foreach ($queryParams as $queryParam) {
+            $parameter = Util::getOperationParameter(
+                $operation,
+                $queryParam->getPath().($queryParam->isMap() ? '[]' : ''),
+                'query'
+            );
+
+            if (null !== $queryParam->getDescription()) {
+                Util::merge($parameter, ['description' => $queryParam->getDescription()]);
             }
 
-            if (null !== $requestAnnotation->getValidation() && !$operation->getResponses()->has(HttpResponse::HTTP_BAD_REQUEST)) {
-                $badRequestResponse = $operation->getResponses()->get(HttpResponse::HTTP_BAD_REQUEST);
+            /** @var OA\Schema $schema */
+            $schema = Util::getChild($parameter, OA\Schema::class);
 
-                if (null === $badRequestResponse->getDescription()) {
-                    $badRequestResponse->setDescription(HttpResponse::$statusTexts[HttpResponse::HTTP_BAD_REQUEST]);
-                }
-
-                $this->describeSchema(
-                    $badRequestResponse->getSchema(),
-                    ConstraintViolationListInterface::class
-                );
-            }
-        }
-
-        $responseAnnotation = $actionAnnotation->getResponse();
-        if (null !== $responseAnnotation && !$operation->getResponses()->has($responseAnnotation->getStatusCode())) {
-            $response = $operation->getResponses()->get($responseAnnotation->getStatusCode());
-
-            if (null === $response->getDescription()) {
-                $response->setDescription(HttpResponse::$statusTexts[$responseAnnotation->getStatusCode()] ?? null);
+            if (OA\UNDEFINED !== $schema->type || OA\UNDEFINED !== $schema->items || OA\UNDEFINED !== $schema->ref) {
+                continue;
             }
 
-            if (null !== $responseAnnotation->getType()) {
-                $groups = (array)($responseAnnotation->getContext()['groups'] ?? []);
+            $type = $queryParam->getType();
+            /** @var string $format */
+            $format = $queryParam->getFormat()
+                ?? OpenApiHelper::getFormatForParamType($type)
+                ?? OA\UNDEFINED;
 
-                $this->describeSchema(
-                    $response->getSchema(),
-                    $responseAnnotation->getType(),
-                    !empty($groups) ? $groups : null
-                );
+            if ($queryParam->isMap()) {
+                $properties = [
+                    'type' => 'array',
+                    'items' => new OA\Items([
+                        'type' => OpenApiHelper::convertParamType($type),
+                        'format' => $format,
+                    ]),
+                ];
+            } else {
+                $properties = [
+                    'type' => OpenApiHelper::convertParamType($type),
+                    'format' => $format,
+                ];
             }
+
+            Util::merge($schema, $properties);
         }
     }
 
-    private function describeSchema(Schema $schema, string $type, ?array $groups = null): void
+    /**
+     * @param OA\RequestBody|OA\Response $body
+     * @param list<string> $groups
+     */
+    private function describeMediaType($body, string $type, array $groups = []): void
     {
-        if (null !== $schema->getType() || null !== $schema->getRef()) {
+        /** @var OA\MediaType $mediaType */
+        $mediaType = Util::getIndexedCollectionItem($body, OA\MediaType::class, 'application/json');
+        /** @var OA\Schema $schema */
+        $schema = Util::getChild($mediaType, OA\Schema::class);
+
+        if (OA\UNDEFINED !== $schema->type || OA\UNDEFINED !== $schema->items || OA\UNDEFINED !== $schema->ref) {
             return;
         }
 
@@ -125,39 +195,28 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
         $modelRef = $this->registerModel($type, $groups);
 
         if ($collection) {
-            $schema
-                ->setType('array')
-                ->getItems()->setRef($modelRef);
+            $properties = [
+                'type' => 'array',
+                'items' => new OA\Items(['ref' => $modelRef]),
+            ];
         } else {
-            $schema->setRef($modelRef);
+            $properties = [
+                'type' => 'object',
+                'ref' => $modelRef,
+            ];
         }
+
+        Util::merge($schema, $properties);
     }
 
-    private function registerModel(string $type, ?array $groups = null): string
+    /**
+     * @param list<string> $groups
+     */
+    private function registerModel(string $type, array $groups = []): string
     {
         return $this->modelRegistry->register(new Model(
             new Type(Type::BUILTIN_TYPE_OBJECT, false, $type),
-            $groups
+            empty($groups) ? null : $groups
         ));
-    }
-
-    private function getActionAnnotation(Route $route): ?ActionAnnotation
-    {
-        $controller = $route->getDefault('_controller');
-
-        if (!\is_string($controller)) {
-            return null;
-        }
-
-        $methodReflection = $this->controllerReflector->getReflectionMethod($controller);
-
-        if (null === $methodReflection) {
-            return null;
-        }
-
-        /** @var ActionAnnotation $annotation */
-        $annotation = $this->annotationReader->getMethodAnnotation($methodReflection, ActionAnnotation::class);
-
-        return $annotation;
     }
 }
