@@ -15,9 +15,12 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\PropertyAccess\PropertyAccess;
-use Symfony\Component\PropertyAccess\PropertyAccessor;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\ValidatorBuilder;
 
 final class ObjectMother
 {
@@ -139,19 +142,24 @@ final class ObjectMother
         );
     }
 
-    public static function constraintViolationList(): ConstraintViolationList
+    public static function validator(): ValidatorInterface
+    {
+        return (new ValidatorBuilder())->getValidator();
+    }
+
+    public static function constraintViolationList(): ConstraintViolationListInterface
     {
         return new ConstraintViolationList([
             new ConstraintViolation('', '', [], null, '', null)
         ]);
     }
 
-    public static function emptyConstraintViolationList(): ConstraintViolationList
+    public static function emptyConstraintViolationList(): ConstraintViolationListInterface
     {
         return new ConstraintViolationList();
     }
 
-    public static function propertyAccessor(): PropertyAccessor
+    public static function propertyAccessor(): PropertyAccessorInterface
     {
         return PropertyAccess::createPropertyAccessor();
     }

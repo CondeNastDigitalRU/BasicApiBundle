@@ -43,6 +43,9 @@ return static function (ContainerConfigurator $container): void {
             ])
 
         ->set('condenast_basic_api.argument_value_resolver.query_param_bag', QueryParamBagResolver::class)
-            ->args([service('condenast_basic_api.property_accessor')])
+            ->args([
+                service('condenast_basic_api.property_accessor'),
+                service('validator')
+            ])
             ->tag('controller.argument_value_resolver');
 };

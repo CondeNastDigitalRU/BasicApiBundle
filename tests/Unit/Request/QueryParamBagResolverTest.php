@@ -21,7 +21,7 @@ class QueryParamBagResolverTest extends TestCase
             [$queryParam->getPath() => $value]
         );
 
-        $resolver = new QueryParamBagResolver(ObjectMother::propertyAccessor());
+        $resolver = new QueryParamBagResolver(ObjectMother::propertyAccessor(), ObjectMother::validator());
 
         $bag = \current($resolver->resolve($request, ObjectMother::argumentMetadata()));
 
@@ -37,7 +37,7 @@ class QueryParamBagResolverTest extends TestCase
         $queryParam = ObjectMother::queryParam();
         $request = ObjectMother::queryParamsRequest([$queryParam]);
 
-        $resolver = new QueryParamBagResolver(ObjectMother::propertyAccessor());
+        $resolver = new QueryParamBagResolver(ObjectMother::propertyAccessor(), ObjectMother::validator());
 
         $bag = \current($resolver->resolve($request, ObjectMother::argumentMetadata()));
 

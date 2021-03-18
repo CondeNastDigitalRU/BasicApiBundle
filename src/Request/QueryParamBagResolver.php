@@ -8,15 +8,20 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class QueryParamBagResolver implements ArgumentValueResolverInterface
 {
     /** @var PropertyAccessorInterface */
     private $propertyAccessor;
 
-    public function __construct(PropertyAccessorInterface $propertyAccessor)
+    /** @var ValidatorInterface */
+    private $validator;
+
+    public function __construct(PropertyAccessorInterface $propertyAccessor, ValidatorInterface $validator)
     {
         $this->propertyAccessor = $propertyAccessor;
+        $this->validator = $validator;
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
@@ -29,7 +34,7 @@ class QueryParamBagResolver implements ArgumentValueResolverInterface
     {
         /** @var QueryParam[] $queryParams */
         $queryParams = $request->attributes->get(RequestConfigurationSubscriber::ATTRIBUTE_API_QUERY_PARAMS) ?? [];
-        $paramFetcher = new ParamFetcher($request->query->all(), $this->propertyAccessor);
+        $paramFetcher = new ParamFetcher($request->query->all(), $this->propertyAccessor, $this->validator);
         $fetchedParams = [];
 
         foreach ($queryParams as $queryParam) {
@@ -37,7 +42,8 @@ class QueryParamBagResolver implements ArgumentValueResolverInterface
             $fetchedParams[$queryParam->getName()] = $paramFetcher->get(
                 $queryParam->getPath(),
                 $queryParam->getType(),
-                $queryParam->isMap()
+                $queryParam->isMap(),
+                $queryParam->getConstraints()
             ) ?? $queryParam->getDefault();
         }
 

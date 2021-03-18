@@ -3,6 +3,8 @@
 namespace Condenast\BasicApiBundle\Request;
 
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ParamFetcher
 {
@@ -12,16 +14,21 @@ class ParamFetcher
     /** @var PropertyAccessorInterface */
     protected $propertyAccessor;
 
-    public function __construct(array $parameters, PropertyAccessorInterface $propertyAccessor)
+    /** @var ValidatorInterface */
+    protected $validator;
+
+    public function __construct(array $parameters, PropertyAccessorInterface $propertyAccessor, ValidatorInterface $validator)
     {
         $this->parameters = $parameters;
         $this->propertyAccessor = $propertyAccessor;
+        $this->validator = $validator;
     }
 
     /**
+     * @param list<Constraint> $constraints
      * @return mixed Parameter value or null if parameter value does not exist or does not meet requirements
      */
-    public function get(string $path, string $type = ParamTypes::STRING, bool $map = false)
+    public function get(string $path, string $type = ParamTypes::STRING, bool $map = false, array $constraints = [])
     {
         [$name, $nestedPath] = static::parsePath($path);
 
@@ -31,10 +38,18 @@ class ParamFetcher
             : $this->parameters[$name] ?? null;
 
         if ($map) {
-            return \is_array($value) ? static::castMap($value, $type) : null;
+            $value = \is_array($value) ? static::castMap($value, $type) : null;
+        } else {
+            /** @var mixed $value */
+            $value = null !== $value ? static::cast($value, $type) : null;
         }
 
-        return null !== $value ? static::cast($value, $type) : null;
+        $valid = true;
+        if ($constraints && null !== $value) {
+            $valid = !(bool) $this->validator->validate($value, $constraints)->count();
+        }
+
+        return $valid ? $value : null;
     }
 
     /**

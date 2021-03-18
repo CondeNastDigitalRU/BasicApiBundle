@@ -5,8 +5,9 @@ namespace Condenast\BasicApiBundle\Tests\Unit\Request;
 use Condenast\BasicApiBundle\Request\ParamFetcher;
 use Condenast\BasicApiBundle\Request\ParamTypes;
 use Condenast\BasicApiBundle\Tests\Unit\Assert;
+use Condenast\BasicApiBundle\Tests\Unit\ObjectMother;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\Validator\Constraints\LessThan;
 
 final class ParamFetcherTest extends TestCase
 {
@@ -20,7 +21,7 @@ final class ParamFetcherTest extends TestCase
     {
         $path = 'param';
         $parameters = [$path => $originalValue];
-        $paramFetcher = new ParamFetcher($parameters, PropertyAccess::createPropertyAccessor());
+        $paramFetcher = new ParamFetcher($parameters, ObjectMother::propertyAccessor(), ObjectMother::validator());
 
         self::assertValuesEquals($expectedValue, $paramFetcher->get($path, $type, $map));
     }
@@ -35,9 +36,33 @@ final class ParamFetcherTest extends TestCase
         $nestedPath = '[nestedParam]';
         $parameters = [$path => ['nestedParam' => $originalValue]];
 
-        $paramFetcher = new ParamFetcher($parameters, PropertyAccess::createPropertyAccessor());
+        $paramFetcher = new ParamFetcher($parameters, ObjectMother::propertyAccessor(), ObjectMother::validator());
 
         self::assertValuesEquals($expectedValue, $paramFetcher->get($path.$nestedPath, $type, $map));
+    }
+
+    /**
+     * @test
+     */
+    public function extracting_an_unknown_type_results_in_an_error(): void
+    {
+        $paramFetcher = new ParamFetcher(['param' => 'value'], ObjectMother::propertyAccessor(), ObjectMother::validator());
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown type "unknown type"');
+
+        $paramFetcher->get('param', 'unknown type');
+    }
+
+    /**
+     * @test
+     */
+    public function it_can_validate_the_extracted_parameter_against_constraints(): void
+    {
+        $paramFetcher = new ParamFetcher(['int' => 5], ObjectMother::propertyAccessor(), ObjectMother::validator());
+
+        self::assertNull($paramFetcher->get('int', ParamTypes::INT, false, [new LessThan(4)]));
+        self::assertSame(5, $paramFetcher->get('int', ParamTypes::INT, false, [new LessThan(7)]));
     }
 
     public function values(): array
@@ -75,18 +100,5 @@ final class ParamFetcherTest extends TestCase
             'Map of invalid DateTimeImmutable' => [ParamTypes::DATETIME, [['invalid datetimeimmutable']], null, true],
             'Invalid map' => [ParamTypes::MIXED, 'invalid array', null, true],
         ];
-    }
-
-    /**
-     * @test
-     */
-    public function extracting_an_unknown_type_results_in_an_error(): void
-    {
-        $paramFetcher = new ParamFetcher(['param' => 'value'], PropertyAccess::createPropertyAccessor());
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown type "unknown type"');
-
-        $paramFetcher->get('param', 'unknown type');
     }
 }
