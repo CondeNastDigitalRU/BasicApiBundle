@@ -17,6 +17,7 @@ use Nelmio\ApiDocBundle\Util\ControllerReflector;
 use OpenApi\Annotations as OA;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Routing\Route;
+use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 /**
@@ -146,29 +147,42 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
                 continue;
             }
 
-            $type = $queryParam->getType();
-            /** @var string $format */
-            $format = $queryParam->getFormat()
-                ?? OpenApiHelper::getFormatForParamType($type)
-                ?? OA\UNDEFINED;
+            $item = [
+                'type' => OpenApiHelper::convertParamType($queryParam->getType()),
+                'format' => $queryParam->getFormat()
+                    ?? OpenApiHelper::getFormatForParamType($queryParam->getType())
+                    ?? OA\UNDEFINED,
+                'default' => $queryParam->getDefault(),
+                'enum' => $this->extractEnum($queryParam->getConstraints()),
+            ];
 
             if ($queryParam->isMap()) {
                 $properties = [
                     'type' => 'array',
-                    'items' => new OA\Items([
-                        'type' => OpenApiHelper::convertParamType($type),
-                        'format' => $format,
-                    ]),
+                    'items' => new OA\Items($item),
                 ];
             } else {
-                $properties = [
-                    'type' => OpenApiHelper::convertParamType($type),
-                    'format' => $format,
-                ];
+                $properties = $item;
             }
 
             Util::merge($schema, $properties);
         }
+    }
+
+    /**
+     * @return mixed
+     */
+    private function extractEnum(array $constraints)
+    {
+        foreach ($constraints as $constraint) {
+            if (!$constraint instanceof Choice) {
+                continue;
+            }
+
+            return \is_callable($constraint->callback) ? ($constraint->callback)() : $constraint->choices;
+        }
+
+        return OA\UNDEFINED;
     }
 
     /**

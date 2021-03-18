@@ -4,6 +4,7 @@ namespace Condenast\BasicApiBundle\Annotation;
 
 use Condenast\BasicApiBundle\Request\ParamTypes;
 use Doctrine\Common\Annotations\Annotation\Attribute;
+use Symfony\Component\Validator\Constraint;
 
 /**
  * @Annotation
@@ -12,9 +13,10 @@ use Doctrine\Common\Annotations\Annotation\Attribute;
  *     @Attribute("name", type="string", required=true),
  *     @Attribute("path", type="string"),
  *     @Attribute("type", type="string", required=true),
+ *     @Attribute("map", type="bool"),
+ *     @Attribute("constraints", type="array<Symfony\Component\Validator\Constraint>"),
  *     @Attribute("default", type="mixed"),
  *     @Attribute("format", type="string"),
- *     @Attribute("map", type="bool"),
  *     @Attribute("description", type="string")
  * })
  */
@@ -32,6 +34,9 @@ class QueryParam
     /** @var bool */
     private $map;
 
+    /** @var list<Constraint> */
+    private $constraints;
+
     /** @var mixed */
     private $default;
 
@@ -47,6 +52,7 @@ class QueryParam
      *     path: string|null,
      *     type: string,
      *     map: boolean,
+     *     constraints: list<Constraint>,
      *     default: mixed,
      *     description: string|null,
      *     format: string|null
@@ -74,6 +80,7 @@ class QueryParam
         $this->type = $values['type'];
 
         $this->map = $values['map'] ?? false;
+        $this->constraints = $values['constraints'] ?? [];
         $this->default = $values['default'] ?? null;
         $this->description = $values['description'] ?? null;
         $this->format = $values['format'] ?? null;
@@ -97,6 +104,14 @@ class QueryParam
     public function isMap(): bool
     {
         return $this->map;
+    }
+
+    /**
+     * @return list<Constraint>
+     */
+    public function getConstraints(): array
+    {
+        return $this->constraints;
     }
 
     /**

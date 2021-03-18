@@ -11,6 +11,7 @@ use Nelmio\ApiDocBundle\Annotation as Nelmio;
 use OpenApi\Annotations as OA;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class ApiController
 {
@@ -24,7 +25,45 @@ class ApiController
      * )
      * @Api\Resource("Query params")
      * @Api\QueryParam(name="string", path="filter[string]", type="string", default="default", description="String"),
-     * @Api\QueryParam(name="strings", path="filter[strings]", type="string", map=true)
+     * @Api\QueryParam(name="strings", path="filter[strings]", type="string", default={"default"}, map=true, description="Strings")
+     * @Api\QueryParam(
+     *     name="int",
+     *     path="filter[int]",
+     *     type="int",
+     *     default=10,
+     *     constraints={@Assert\LessThanOrEqual(100)},
+     *     description="Int",
+     * )
+     * @Api\QueryParam(
+     *     name="ints",
+     *     path="filter[ints]",
+     *     type="int",
+     *     default={10},
+     *     constraints={
+     *         @Assert\All(
+     *             @Assert\LessThanOrEqual(100)
+     *         ),
+     *         @Assert\Count(max=4)
+     *     },
+     *     map=true,
+     *     description="Ints"
+     * )
+     * @Api\QueryParam(
+     *     name="sorting",
+     *     path="soring[id]",
+     *     type="string",
+     *     default="ASC",
+     *     constraints={@Assert\Choice({"ASC", "DESC"})},
+     *     description="Sorting by ID"
+     * )
+     * @Api\QueryParam(
+     *     name="sortings",
+     *     type="string",
+     *     default={"id": "ASC"},
+     *     constraints={@Assert\All(@Assert\Choice({"ASC", "DESC"}))},
+     *     map=true,
+     *     description="Sortings",
+     * )
      */
     public function queryParams(QueryParamBag $query): Payload
     {

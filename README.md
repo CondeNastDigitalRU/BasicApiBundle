@@ -56,6 +56,7 @@ use Condenast\BasicApiBundle\Request\QueryParamBag;
 use Condenast\BasicApiBundle\Response\Payload;
 use Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class ArticleController
 {
@@ -81,8 +82,13 @@ class ArticleController
      *     path="extra[tags]", # The path to the parameter in the request, if not specified, will be equal to the name.
      *     type=ParamTypes::STRING, # Parameter type
      *     map=true, # Whether the parameter is an array
+     *     constraints={ # Validation constraints
+     *         @Assert\All(@Assert\Length(min=2)),
+     *         @Assert\Count(min=5),
+     *     },
      *     default={}, # Default parameter value
-*                      # If not specified, then null or an empty array, depending on whether the parameter is declared as an array
+     *                 # If not specified, then null or an empty array, depending on whether the parameter is declared as an array
+     *                 # If the parameter value does not meet the requirements, the default value will be returned
      *     description="Tags to associate with", # Description, for an API documentation only
      *     format="uuid" # Format, for an API documentation only
      * )
@@ -103,7 +109,7 @@ class ArticleController
     }
 }
 ```
-
+### CORS
 The bundle does not contain anything for CORS, if necessary, use `nelmio/cors-bundle`.
 
 ### API documentation
