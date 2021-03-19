@@ -2,7 +2,6 @@
 
 namespace Condenast\BasicApiBundle\Annotation;
 
-use Condenast\BasicApiBundle\Request\ParamTypes;
 use Doctrine\Common\Annotations\Annotation\Attribute;
 use Symfony\Component\Validator\Constraint;
 
@@ -12,8 +11,7 @@ use Symfony\Component\Validator\Constraint;
  * @Attributes({
  *     @Attribute("name", type="string", required=true),
  *     @Attribute("path", type="string"),
- *     @Attribute("type", type="string", required=true),
- *     @Attribute("map", type="bool"),
+ *     @Attribute("isArray", type="bool"),
  *     @Attribute("constraints", type="array<Symfony\Component\Validator\Constraint>"),
  *     @Attribute("default", type="mixed"),
  *     @Attribute("format", type="string"),
@@ -28,11 +26,8 @@ class QueryParam
     /** @var string */
     private $path;
 
-    /** @var string */
-    private $type;
-
     /** @var bool */
-    private $map;
+    private $isArray;
 
     /** @var list<Constraint> */
     private $constraints;
@@ -40,18 +35,17 @@ class QueryParam
     /** @var mixed */
     private $default;
 
-    /** @var string|null */
+    /** @var string */
     private $description;
 
-    /** @var string|null */
+    /** @var string */
     private $format;
 
     /**
      * @param array{
      *     name: string,
      *     path: string|null,
-     *     type: string,
-     *     map: boolean,
+     *     isArray: boolean,
      *     constraints: list<Constraint>,
      *     default: mixed,
      *     description: string|null,
@@ -70,20 +64,12 @@ class QueryParam
         }
         $this->path = $values['path'] ?? $values['name'];
 
-        if (!\in_array($values['type'], ParamTypes::TYPES, true)) {
-            throw new \InvalidArgumentException(\sprintf(
-                'Unknown type "%s", known types: "%s"',
-                $values['type'],
-                \implode('", "', ParamTypes::TYPES)
-            ));
-        }
-        $this->type = $values['type'];
-
-        $this->map = $values['map'] ?? false;
+        $this->isArray = $values['isArray'] ?? false;
         $this->constraints = $values['constraints'] ?? [];
-        $this->default = $values['default'] ?? null;
-        $this->description = $values['description'] ?? null;
-        $this->format = $values['format'] ?? null;
+        $default = $this->isArray ? [] : null;
+        $this->default = \array_key_exists('default', $values) ? $values['default'] : $default;
+        $this->description = $values['description'] ?? '';
+        $this->format = $values['format'] ?? '';
     }
 
     public function getName(): string
@@ -96,14 +82,23 @@ class QueryParam
         return $this->path;
     }
 
-    public function getType(): string
+    public function getQueryStringParam(): string
     {
-        return $this->type;
+        $parts = \explode('.', $this->path);
+
+        return \array_shift($parts)
+            .(!empty($parts) ? '['.\implode('][', $parts).']' : '')
+            .($this->isArray ? '[]' : '');
     }
 
-    public function isMap(): bool
+    public function getQueryArrayPath(): string
     {
-        return $this->map;
+        return '['.\implode('][', \explode('.', $this->path)).']';
+    }
+
+    public function isArray(): bool
+    {
+        return $this->isArray;
     }
 
     /**
@@ -119,15 +114,15 @@ class QueryParam
      */
     public function getDefault()
     {
-        return $this->default ?? ($this->isMap() ? [] : null);
+        return $this->default;
     }
 
-    public function getDescription(): ?string
+    public function getDescription(): string
     {
         return $this->description;
     }
 
-    public function getFormat(): ?string
+    public function getFormat(): string
     {
         return $this->format;
     }

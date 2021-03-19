@@ -28,19 +28,4 @@ class QueryParamBagResolverTest extends TestCase
         self::assertInstanceOf(QueryParamBag::class, $bag);
         self::assertSame($value, $bag->get($queryParam->getName()));
     }
-
-    /**
-     * @test
-     */
-    public function it_initializes_with_a_default_value_if_the_parameter_is_not_present_in_the_request(): void
-    {
-        $queryParam = ObjectMother::queryParam();
-        $request = ObjectMother::queryParamsRequest([$queryParam]);
-
-        $resolver = new QueryParamBagResolver(ObjectMother::propertyAccessor(), ObjectMother::validator());
-
-        $bag = \current($resolver->resolve($request, ObjectMother::argumentMetadata()));
-
-        self::assertSame($queryParam->getDefault(), $bag->get($queryParam->getName()));
-    }
 }

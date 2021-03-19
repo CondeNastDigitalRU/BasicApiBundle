@@ -24,45 +24,33 @@ class ApiController
      *     methods={"GET"},
      * )
      * @Api\Resource("Query params")
-     * @Api\QueryParam(name="string", path="filter[string]", type="string", default="default", description="String"),
-     * @Api\QueryParam(name="strings", path="filter[strings]", type="string", default={"default"}, map=true, description="Strings")
      * @Api\QueryParam(
-     *     name="int",
-     *     path="filter[int]",
-     *     type="int",
-     *     default=10,
-     *     constraints={@Assert\LessThanOrEqual(100)},
-     *     description="Int",
+     *     name="id",
+     *     path="filter.id",
+     *     default=1,
+     *     constraints={@Assert\GreaterThan(0), @Assert\LessThan(100), @Assert\Regex("/\d+/")},
+     *     description="Id",
      * )
      * @Api\QueryParam(
-     *     name="ints",
-     *     path="filter[ints]",
-     *     type="int",
-     *     default={10},
-     *     constraints={
-     *         @Assert\All(
-     *             @Assert\LessThanOrEqual(100)
-     *         ),
-     *         @Assert\Count(max=4)
-     *     },
-     *     map=true,
-     *     description="Ints"
+     *     name="ids",
+     *     path="filter.ids",
+     *     default={1},
+     *     constraints={@Assert\GreaterThan(0)},
+     *     isArray=true,
+     *     description="Ids"
      * )
      * @Api\QueryParam(
-     *     name="sorting",
-     *     path="soring[id]",
-     *     type="string",
+     *     name="sorting_id",
+     *     path="soring.id",
      *     default="ASC",
      *     constraints={@Assert\Choice({"ASC", "DESC"})},
-     *     description="Sorting by ID"
+     *     description="Sort by ID"
      * )
      * @Api\QueryParam(
-     *     name="sortings",
-     *     type="string",
-     *     default={"id": "ASC"},
-     *     constraints={@Assert\All(@Assert\Choice({"ASC", "DESC"}))},
-     *     map=true,
-     *     description="Sortings",
+     *     name="email",
+     *     default=null,
+     *     constraints={@Assert\Email},
+     *     description="Email",
      * )
      */
     public function queryParams(QueryParamBag $query): Payload

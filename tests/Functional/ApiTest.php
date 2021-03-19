@@ -19,12 +19,10 @@ final class ApiTest extends WebTestCase
         self::assertJsonResponse($response, 200);
         self::assertJsonStringEqualsJsonString(
             \json_encode([
-                'string' => 'default',
-                'strings' => ['default'],
-                'int' => 10,
-                'ints' => [10],
-                'sorting' => 'ASC',
-                'sortings' => ['id' => 'ASC'],
+                'id' => 1,
+                'ids' => [1],
+                'sorting_id' => 'ASC',
+                'email' => null,
             ]),
             $response->getContent()
         );

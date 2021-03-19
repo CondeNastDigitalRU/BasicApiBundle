@@ -6,7 +6,6 @@ use Condenast\BasicApiBundle\Annotation\Deserialization;
 use Condenast\BasicApiBundle\Annotation\QueryParam;
 use Condenast\BasicApiBundle\Annotation\Validation;
 use Condenast\BasicApiBundle\EventListener\RequestConfigurationSubscriber;
-use Condenast\BasicApiBundle\Request\ParamTypes;
 use Condenast\BasicApiBundle\Response\Payload;
 use PHPUnit\Framework\MockObject\Generator;
 use Symfony\Component\HttpFoundation\Request;
@@ -116,7 +115,6 @@ final class ObjectMother
         return new QueryParam([
             'name' => 'name',
             'path' => 'path',
-            'type' => ParamTypes::STRING,
             'default' => 'default',
         ]);
     }
