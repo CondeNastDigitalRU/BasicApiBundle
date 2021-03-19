@@ -51,7 +51,6 @@ Example:
 <?php declare(strict_types=1);
 
 use Condenast\BasicApiBundle\Annotation as Api;
-use Condenast\BasicApiBundle\Request\ParamTypes;
 use Condenast\BasicApiBundle\Request\QueryParamBag;
 use Condenast\BasicApiBundle\Response\Payload;
 use Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article;
@@ -79,12 +78,10 @@ class ArticleController
      * )
      * @Api\QueryParam(
      *     name="tags", # The name by which the parameter will be available in the QueryParamBag
-     *     path="extra[tags]", # The path to the parameter in the request, if not specified, will be equal to the name.
-     *     type=ParamTypes::STRING, # Parameter type
+     *     path="extra.tags", # The path to the parameter in the request, if not specified, will be equal to the name.
      *     map=true, # Whether the parameter is an array
      *     constraints={ # Validation constraints
-     *         @Assert\All(@Assert\Length(min=2)),
-     *         @Assert\Count(min=5),
+               @Assert\Length(min=2),
      *     },
      *     default={}, # Default parameter value
      *                 # If not specified, then null or an empty array, depending on whether the parameter is declared as an array

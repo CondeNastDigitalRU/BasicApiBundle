@@ -37,14 +37,14 @@ class QueryParamBagResolver implements ArgumentValueResolverInterface
         $paramFetcher = new ParamFetcher($request->query->all(), $this->propertyAccessor, $this->validator);
         $fetchedParams = [];
 
+        /** @psalm-suppress MixedAssignment */
         foreach ($queryParams as $queryParam) {
-            /** @psalm-suppress MixedAssignment */
             $fetchedParams[$queryParam->getName()] = $paramFetcher->get(
-                $queryParam->getPath(),
-                $queryParam->getType(),
-                $queryParam->isMap(),
-                $queryParam->getConstraints()
-            ) ?? $queryParam->getDefault();
+                $queryParam->getQueryArrayPath(),
+                $queryParam->getConstraints(),
+                $queryParam->isArray(),
+                $queryParam->getDefault()
+            );
         }
 
         return [new QueryParamBag($fetchedParams)];

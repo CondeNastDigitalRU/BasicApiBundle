@@ -33,8 +33,8 @@ return static function (ContainerConfigurator $container): void {
             ->tag('kernel.event_subscriber')
 
         ->set('condenast_basic_api.property_accessor_builder', PropertyAccessorBuilder::class)
-            ->call('disableExceptionOnInvalidIndex')
-            ->call('disableExceptionOnInvalidPropertyPath')
+            ->call('enableExceptionOnInvalidIndex')
+            ->call('enableExceptionOnInvalidPropertyPath')
 
         ->set('condenast_basic_api.property_accessor', PropertyAccessor::class)
             ->factory([

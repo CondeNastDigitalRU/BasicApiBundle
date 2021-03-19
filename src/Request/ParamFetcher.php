@@ -2,8 +2,11 @@
 
 namespace Condenast\BasicApiBundle\Request;
 
+use Symfony\Component\PropertyAccess\Exception\ExceptionInterface;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\Constraints\All;
+use Symfony\Component\Validator\Exception\ValidatorException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ParamFetcher
@@ -26,103 +29,29 @@ class ParamFetcher
 
     /**
      * @param list<Constraint> $constraints
-     * @return mixed Parameter value or null if parameter value does not exist or does not meet requirements
+     * @param mixed $default
+     * @return mixed Parameter value or default value if parameter value does not exist or does not meet requirements
      */
-    public function get(string $path, string $type = ParamTypes::STRING, bool $map = false, array $constraints = [])
+    public function get(string $path, array $constraints = [], bool $isArray = false, $default = null)
     {
-        [$name, $nestedPath] = static::parsePath($path);
-
-        /** @var mixed $value */
-        $value = null !== $nestedPath
-            ? $this->extractNested($this->parameters[$name] ?? null, $nestedPath)
-            : $this->parameters[$name] ?? null;
-
-        if ($map) {
-            $value = \is_array($value) ? static::castMap($value, $type) : null;
-        } else {
+        try {
             /** @var mixed $value */
-            $value = null !== $value ? static::cast($value, $type) : null;
+            $value = $this->propertyAccessor->getValue($this->parameters, $path);
+        } catch (ExceptionInterface $e) {
+            return $default;
         }
 
-        $valid = true;
-        if ($constraints && null !== $value) {
-            $valid = !(bool) $this->validator->validate($value, $constraints)->count();
+        if ($isArray && !\is_array($value)) {
+            return $default;
         }
 
-        return $valid ? $value : null;
-    }
-
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
-    protected function extractNested($value, string $nestedPath)
-    {
-        return \is_array($value) ? $this->propertyAccessor->getValue($value, $nestedPath) : null;
-    }
-
-    /**
-     * @return array{0: string, 1: string|null}
-     */
-    protected static function parsePath(string $path): array
-    {
-        /** @var list<string> $parts */
-        $parts = \explode('[', $path, 2);
-        $parts[1] = 1 === \count($parts) ? null : '['.$parts[1];
-        /** @var array{0: string, 1: string|null} $parts */
-
-        return $parts;
-    }
-
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
-    protected static function cast($value, string $type)
-    {
-        switch ($type) {
-            case ParamTypes::MIXED:
-                return $value;
-            case ParamTypes::BOOLEAN:
-                return \filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-            case ParamTypes::STRING:
-                return \is_scalar($value) ? (string) $value : null;
-            case ParamTypes::INT:
-                return \filter_var($value, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
-            case ParamTypes::FLOAT:
-                return \filter_var($value, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE);
-            case ParamTypes::DATETIME:
-            case ParamTypes::DATETIME_IMMUTABLE:
-                $dateTimeClass = ParamTypes::DATETIME === $type ? \DateTime::class : \DateTimeImmutable::class;
-
-                try {
-                    $value = new $dateTimeClass($value);
-                } catch (\Throwable $e) {
-                    return null;
-                }
-
-                return $value;
-            default:
-                throw new \InvalidArgumentException(\sprintf('Unknown type "%s", known types: "%s"', $type, \implode('", "', ParamTypes::TYPES)));
-        }
-    }
-
-    /**
-     * @psalm-suppress MixedAssignment
-     */
-    protected static function castMap(array $values, string $type): ?array
-    {
-        $result = [];
-        foreach ($values as $key => $value) {
-            $value = static::cast($value, $type);
-
-            if (null === $value && ParamTypes::MIXED !== $type) {
-                return null;
-            }
-
-            $result[$key] = $value;
+        try {
+            $valid = empty($constraints)
+                || !(bool)$this->validator->validate($value, $isArray ? new All($constraints) : $constraints)->count();
+        } catch (ValidatorException $e) {
+            $valid = false;
         }
 
-        return $result;
+        return $valid ? $value : $default;
     }
 }
