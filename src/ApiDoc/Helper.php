@@ -6,7 +6,12 @@ final class Helper
 {
     public static function camelCaseToSentence(string $camelCase): string
     {
-        return \ucfirst(\trim(\preg_replace_callback(
+        return \ucfirst(self::camelCaseToWords($camelCase));
+    }
+
+    public static function camelCaseToWords(string $camelCase): string
+    {
+        return \ltrim(\preg_replace_callback(
             '/([A-Z])/',
             /**
              * @param array<int, string> $matches
@@ -15,7 +20,7 @@ final class Helper
                 return ' '.\lcfirst($matches[1]);
             },
             $camelCase
-        )));
+        ), ' ');
     }
 
     /**

@@ -18,10 +18,7 @@ use OpenApi\Annotations as OA;
 use Symfony\Component\PropertyInfo\Type as PropertyInfoType;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\Constraints\AbstractComparison;
-use Symfony\Component\Validator\Constraints\Choice;
-use Symfony\Component\Validator\Constraints\Regex;
-use Symfony\Component\Validator\Constraints\Type;
+use Symfony\Component\Validator\Constraints;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 /**
@@ -140,7 +137,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
                 'query'
             );
 
-            Util::merge($parameter, ['description' => $this->extractDescription($queryParam)]);
+            Util::merge($parameter, ['description' => $this->extractDescription($queryParam) ?? OA\UNDEFINED]);
 
             /** @var OA\Schema $schema */
             $schema = Util::getChild($parameter, OA\Schema::class);
@@ -151,10 +148,10 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
             $item = [
                 'type' => 'string',
-                'format' => '' !== $queryParam->getFormat() ? $queryParam->getFormat() : OA\UNDEFINED,
+                'format' => $this->extractFormat($queryParam) ?? OA\UNDEFINED,
                 'default' => $queryParam->getDefault(),
-                'enum' => $this->extractEnum($queryParam->getConstraints()),
-                'pattern' => $this->extractPattern($queryParam->getConstraints()),
+                'enum' => $this->extractEnum($queryParam->getConstraints()) ?? OA\UNDEFINED,
+                'pattern' => $this->extractPattern($queryParam->getConstraints()) ?? OA\UNDEFINED,
             ];
 
             if ($queryParam->isArray()) {
@@ -221,40 +218,32 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
     /**
      * @param list<Constraint> $constraints
-     * @return mixed
      */
-    private function extractEnum(array $constraints)
+    private function extractEnum(array $constraints): ?array
     {
-        $constraint = $this->findConstraint($constraints, Choice::class);
+        $constraint = $this->findConstraint($constraints, Constraints\Choice::class);
 
         if (null === $constraint) {
-            return OA\UNDEFINED;
+            return null;
         }
 
-        return \is_callable($constraint->callback) ? ($constraint->callback)() : $constraint->choices;
+        /** @var list<string> $enum */
+        $enum = \is_callable($constraint->callback) ? ($constraint->callback)() : $constraint->choices;
+
+        return $enum;
     }
 
     /**
      * @param list<Constraint> $constraints
-     * @psalm-suppress MixedInferredReturnType
-     * @psalm-suppress MixedReturnStatement
      */
-    private function extractPattern(array $constraints): string
+    private function extractPattern(array $constraints): ?string
     {
-        $constraint = $this->findConstraint($constraints, Regex::class);
+        $constraint = $this->findConstraint($constraints, Constraints\Regex::class);
 
-        if (null === $constraint) {
-            return OA\UNDEFINED;
-        }
-
-        return $constraint->getHtmlPattern() ?? OA\UNDEFINED;
+        return null !== $constraint ? $constraint->getHtmlPattern() : null;
     }
 
-    /**
-     * @psalm-suppress MixedReturnStatement
-     * @psalm-suppress MixedInferredReturnType
-     */
-    private function extractDescription(QueryParam $queryParam): string
+    private function extractDescription(QueryParam $queryParam): ?string
     {
         $description = [];
 
@@ -273,7 +262,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
             $description = \array_merge($description, ['*Requirements*'], $requirements);
         }
 
-        return !empty($description) ? \implode("\n\n", $description) : OA\UNDEFINED;
+        return !empty($description) ? \implode("\n\n", $description) : null;
     }
 
     /**
@@ -287,22 +276,22 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
         foreach ($constraints as $constraint) {
             $ref = new \ReflectionClass($constraint);
             switch (true) {
-                case $constraint instanceof AbstractComparison:
+                case $constraint instanceof Constraints\AbstractComparison:
                     $requirements[] = \sprintf(
                         '%s: %s',
                         Helper::camelCaseToSentence($ref->getShortName()),
                         Helper::toString($constraint->value)
                     );
                     break;
-                case $constraint instanceof Type:
+                case $constraint instanceof Constraints\Type:
                     $requirements[] = \sprintf(
                         '%s: %s',
                         Helper::camelCaseToSentence($ref->getShortName()),
                         Helper::toString($constraint->type)
                     );
                     break;
-                case $constraint instanceof Regex:
-                case $constraint instanceof Choice:
+                case $constraint instanceof Constraints\Regex:
+                case $constraint instanceof Constraints\Choice:
                     break;
                 default:
                     $requirements[] = $ref->getShortName();
@@ -310,6 +299,46 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
         }
 
         return $requirements;
+    }
+
+    public function extractFormat(QueryParam $queryParam): ?string
+    {
+        if ('' !== $queryParam->getFormat()) {
+            return $queryParam->getFormat();
+        }
+
+        $format = null;
+
+        foreach ($queryParam->getConstraints() as $constraint) {
+            $ref = new \ReflectionClass($constraint);
+
+            switch (true) {
+                case $constraint instanceof Constraints\Bic:
+                case $constraint instanceof Constraints\CardScheme:
+                case $constraint instanceof Constraints\Country:
+                case $constraint instanceof Constraints\Currency:
+                case $constraint instanceof Constraints\Date:
+                case $constraint instanceof Constraints\DateTime:
+                case $constraint instanceof Constraints\Email:
+                case $constraint instanceof Constraints\Hostname:
+                case $constraint instanceof Constraints\Iban:
+                case $constraint instanceof Constraints\Isbn:
+                case $constraint instanceof Constraints\Isin:
+                case $constraint instanceof Constraints\Issn:
+                case $constraint instanceof Constraints\Language:
+                case $constraint instanceof Constraints\Locale:
+                case $constraint instanceof Constraints\Luhn:
+                case $constraint instanceof Constraints\Time:
+                case $constraint instanceof Constraints\Timezone:
+                case $constraint instanceof Constraints\Ulid:
+                case $constraint instanceof Constraints\Url:
+                case $constraint instanceof Constraints\Uuid:
+                    $format = Helper::camelCaseToWords($ref->getShortName());
+                    break 2;
+            }
+        }
+
+        return $format;
     }
 
     /**
