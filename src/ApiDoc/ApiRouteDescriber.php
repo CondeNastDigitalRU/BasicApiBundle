@@ -274,27 +274,37 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
         $requirements = [];
 
         foreach ($constraints as $constraint) {
-            $ref = new \ReflectionClass($constraint);
+            $title = Helper::camelCaseToSentence((new \ReflectionClass($constraint))->getShortName());
             switch (true) {
                 case $constraint instanceof Constraints\AbstractComparison:
                     $requirements[] = \sprintf(
                         '%s: %s',
-                        Helper::camelCaseToSentence($ref->getShortName()),
+                        $title,
                         Helper::toString($constraint->value)
                     );
                     break;
                 case $constraint instanceof Constraints\Type:
                     $requirements[] = \sprintf(
                         '%s: %s',
-                        Helper::camelCaseToSentence($ref->getShortName()),
+                        $title,
                         Helper::toString($constraint->type)
+                    );
+                    break;
+                case $constraint instanceof Constraints\Length:
+                    $requirements[] = \sprintf(
+                        '%s: %s',
+                        $title,
+                        \implode(', ', \array_filter([
+                            null !== $constraint->min ? \sprintf('min - %s', (string) $constraint->min) : '',
+                            null !== $constraint->max ? \sprintf('max - %s', (string) $constraint->max) : '',
+                        ]))
                     );
                     break;
                 case $constraint instanceof Constraints\Regex:
                 case $constraint instanceof Constraints\Choice:
                     break;
                 default:
-                    $requirements[] = $ref->getShortName();
+                    $requirements[] = $title;
             }
         }
 
@@ -310,7 +320,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
         $format = null;
 
         foreach ($queryParam->getConstraints() as $constraint) {
-            $ref = new \ReflectionClass($constraint);
+            $title = Helper::camelCaseToSentence((new \ReflectionClass($constraint))->getShortName());
 
             switch (true) {
                 case $constraint instanceof Constraints\Bic:
@@ -333,7 +343,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
                 case $constraint instanceof Constraints\Ulid:
                 case $constraint instanceof Constraints\Url:
                 case $constraint instanceof Constraints\Uuid:
-                    $format = Helper::camelCaseToWords($ref->getShortName());
+                    $format = $title;
                     break 2;
             }
         }
