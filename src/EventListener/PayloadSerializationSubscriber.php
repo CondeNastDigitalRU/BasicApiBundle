@@ -42,7 +42,7 @@ class PayloadSerializationSubscriber implements EventSubscriberInterface
         $data = $payload->getData();
 
         $json = null !== $data
-            ? $json = $this->serializer->serialize($data, 'json', $payload->getSerializationContext())
+            ? $this->serializer->serialize($data, 'json', $payload->getSerializationContext())
             : '';
 
         $response = new Response(
