@@ -71,7 +71,9 @@ class ArticleController
      * @Api\Deserialization(
      *     argument="article", # The argument of the controller method, the result of deserialization will be passed there
      *     type=Article::class, # The type of deserialization, such as Article or Article [] for an array of articles
-     *     context={"groups": "article.write"} # Deserialization context
+     *     context={"groups": "article.write"} # Deserialization context,
+     *     requestAttributes={"id": "id"} # Request attributes to assign their values to the properties of the deserialized object
+     *                                    # It can be useful when, for example, in an edit action you deserialize the DTO, and the identifier of the entity is in the url
      * )
      * @Api\Validation(
      *     groups={"article.write"} # Validation groups

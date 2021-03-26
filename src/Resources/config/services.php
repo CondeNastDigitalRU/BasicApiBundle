@@ -21,7 +21,10 @@ return static function (ContainerConfigurator $container): void {
             ->tag('kernel.event_subscriber')
 
         ->set('condenast_basic_api.event_listener.request_deserialization_subscriber', RequestDeserializationSubscriber::class)
-            ->args([service('serializer')])
+            ->args([
+                service('serializer'),
+                service('condenast_basic_api.property_accessor')
+            ])
             ->tag('kernel.event_subscriber')
 
         ->set('condenast_basic_api.event_listener.request_validation_subscriber', RequestValidationSubscriber::class)
