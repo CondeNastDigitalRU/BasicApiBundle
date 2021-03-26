@@ -8,7 +8,8 @@ namespace Condenast\BasicApiBundle\Annotation;
  * @Attributes({
  *     @Attribute("argument", type="string", required=true),
  *     @Attribute("type", type="string", required=true),
- *     @Attribute("context", type="array")
+ *     @Attribute("context", type="array"),
+ *     @Attribute("requestAttributes", type="array"),
  * })
  */
 class Deserialization
@@ -22,8 +23,11 @@ class Deserialization
     /** @var array */
     private $context;
 
+    /** @var array<string, string> [attributeName => propertyPath] */
+    private $requestAttributes;
+
     /**
-     * @param array{argument: string, type: string, context: array|null} $values
+     * @param array{argument: string, type: string, context: array|null, requestAttributes: array<string, string>|null} $values
      */
     public function __construct(array $values)
     {
@@ -38,6 +42,8 @@ class Deserialization
         $this->type = $values['type'];
 
         $this->context = $values['context'] ?? [];
+
+        $this->requestAttributes = $values['requestAttributes'] ?? [];
     }
 
     public function getArgument(): string
@@ -53,5 +59,13 @@ class Deserialization
     public function getContext(): array
     {
         return $this->context;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getRequestAttributes(): array
+    {
+        return $this->requestAttributes;
     }
 }

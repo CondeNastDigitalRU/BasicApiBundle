@@ -21,7 +21,9 @@ final class RequestDeserializationSubscriberTest extends TestCase
         $request = ObjectMother::deserializationRequest($deserialization);
         $event = ObjectMother::controllerEvent($request);
 
-        $deserialized = ['data'];
+        $deserialized = new class {
+            public $property;
+        };
         $serializer = $this->createMock(SerializerInterface::class);
         $serializer
             ->expects(self::once())
@@ -29,11 +31,36 @@ final class RequestDeserializationSubscriberTest extends TestCase
             ->with($request->getContent(), $deserialization->getType(), 'json', $deserialization->getContext())
             ->willReturn($deserialized);
 
-        $subscriber = new RequestDeserializationSubscriber($serializer);
+        $subscriber = new RequestDeserializationSubscriber($serializer, ObjectMother::propertyAccessor());
 
         $subscriber->onKernelController($event);
 
         self::assertSame($request->attributes->get($deserialization->getArgument()), $deserialized);
+    }
+
+    /**
+     * @test
+     */
+    public function it_can_set_the_value_of_the_request_attribute_to_a_property_of_the_deserialized_object(): void
+    {
+        $deserialization = ObjectMother::deserialization();
+        $attributeValue = 'value';
+        $request = ObjectMother::deserializationRequest($deserialization, null, ['attribute' => $attributeValue]);
+        $event = ObjectMother::controllerEvent($request);
+
+        $deserialized = new class {
+            public $property;
+        };
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer
+            ->method('deserialize')
+            ->willReturn($deserialized);
+
+        $subscriber = new RequestDeserializationSubscriber($serializer, ObjectMother::propertyAccessor());
+
+        $subscriber->onKernelController($event);
+
+        self::assertSame($attributeValue, $deserialized->property);
     }
 
     /**
@@ -50,7 +77,7 @@ final class RequestDeserializationSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('deserialize');
 
-        $subscriber = new RequestDeserializationSubscriber($serializer);
+        $subscriber = new RequestDeserializationSubscriber($serializer, ObjectMother::propertyAccessor());
 
         $subscriber->onKernelController($event);
 
@@ -73,11 +100,10 @@ final class RequestDeserializationSubscriberTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage(\sprintf('An attribute with name "%s" is already present in the request', $deserialization->getArgument()));
 
-        $subscriber = new RequestDeserializationSubscriber($serializer);
+        $subscriber = new RequestDeserializationSubscriber($serializer, ObjectMother::propertyAccessor());
 
         $subscriber->onKernelController($event);
     }
-
 
     /**
      * @test
@@ -98,7 +124,7 @@ final class RequestDeserializationSubscriberTest extends TestCase
         $this->expectException($expectedException);
         $this->expectExceptionMessage($expectedExceptionMessage);
 
-        $subscriber = new RequestDeserializationSubscriber($serializer);
+        $subscriber = new RequestDeserializationSubscriber($serializer, ObjectMother::propertyAccessor());
 
         $subscriber->onKernelController($event);
     }

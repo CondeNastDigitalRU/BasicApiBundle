@@ -102,6 +102,7 @@ final class ObjectMother
             'argument' => 'argument',
             'type' => 'ClassName',
             'context' => ['groups' => ['group']],
+            'requestAttributes' => ['attribute' => 'property'],
         ]);
     }
 

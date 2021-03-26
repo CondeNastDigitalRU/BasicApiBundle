@@ -7,6 +7,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -16,9 +17,13 @@ class RequestDeserializationSubscriber implements EventSubscriberInterface
     /** @var SerializerInterface */
     private $serializer;
 
-    public function __construct(SerializerInterface $serializer)
+    /** @var PropertyAccessorInterface */
+    private $propertyAccessor;
+
+    public function __construct(SerializerInterface $serializer, PropertyAccessorInterface $propertyAccessor)
     {
         $this->serializer = $serializer;
+        $this->propertyAccessor = $propertyAccessor;
     }
 
     public static function getSubscribedEvents(): array
@@ -56,6 +61,18 @@ class RequestDeserializationSubscriber implements EventSubscriberInterface
             throw new BadRequestHttpException('Request does not contain valid json', $e);
         } catch (ExceptionInterface|\TypeError $e) {
             throw new BadRequestHttpException('Request can\'t be deserialized', $e);
+        }
+
+        foreach ($deserialization->getRequestAttributes() as $attribute => $propertyPath) {
+            if (!$request->attributes->has($attribute)) {
+                continue;
+            }
+
+            $this->propertyAccessor->setValue(
+                $deserialized,
+                $propertyPath,
+                $request->attributes->get($attribute)
+            );
         }
 
         $request->attributes->set($argument, $deserialized);
