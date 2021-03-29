@@ -66,6 +66,38 @@ final class RequestDeserializationSubscriberTest extends TestCase
     /**
      * @test
      */
+    public function it_can_set_the_value_of_the_request_attribute_to_the_properties_of_the_deserialized_array_objects(): void
+    {
+        $deserialization = ObjectMother::deserialization();
+        $attributeValue = 'value';
+        $request = ObjectMother::deserializationRequest($deserialization, null, ['attribute' => $attributeValue]);
+        $event = ObjectMother::controllerEvent($request);
+
+        $deserialized = [
+            new class {
+                public $property;
+            },
+            new class {
+                public $property;
+            },
+        ];
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer
+            ->method('deserialize')
+            ->willReturn($deserialized);
+
+        $subscriber = new RequestDeserializationSubscriber($serializer, ObjectMother::propertyAccessor());
+
+        $subscriber->onKernelController($event);
+
+        foreach ($deserialized as $item) {
+            self::assertSame($attributeValue, $item->property);
+        }
+    }
+
+    /**
+     * @test
+     */
     public function it_skips_if_there_is_no_deserialization_annotation_in_request(): void
     {
         $request = ObjectMother::deserializationRequest();
