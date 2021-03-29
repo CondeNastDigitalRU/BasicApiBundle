@@ -50,7 +50,7 @@ class RequestDeserializationSubscriber implements EventSubscriberInterface
         }
 
         try {
-            /** @var object|list<object> $deserialized */
+            /** @var object|array<object> $deserialized */
             $deserialized = $this->serializer->deserialize(
                 $request->getContent(),
                 $deserialization->getType(),
@@ -68,13 +68,38 @@ class RequestDeserializationSubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            $this->propertyAccessor->setValue(
-                $deserialized,
-                $propertyPath,
-                $request->attributes->get($attribute)
-            );
+            /** @var mixed $attributeValue */
+            $attributeValue = $request->get($attribute);
+
+            if (\is_array($deserialized)) {
+                foreach ($deserialized as $item) {
+                    $this->setRequestAttribute($item, $propertyPath, $attributeValue);
+                }
+            } else {
+                $this->setRequestAttribute($deserialized, $propertyPath, $attributeValue);
+            }
         }
 
         $request->attributes->set($argument, $deserialized);
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private function setRequestAttribute(object $deserialized, string $propertyPath, $value): void
+    {
+        if (!$this->propertyAccessor->isWritable($deserialized, $propertyPath)) {
+            throw new \RuntimeException(\sprintf(
+                'The property path "%s" is not writable in class "%s"',
+                $propertyPath,
+                \get_class($deserialized)
+            ));
+        }
+
+        $this->propertyAccessor->setValue(
+            $deserialized,
+            $propertyPath,
+            $value
+        );
     }
 }

@@ -66,11 +66,8 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
             return;
         }
 
-        /** @var Resource|null $resource */
         $resource = $this->annotationReader->getMethodAnnotation($methodReflection, Resource::class);
-        /** @var Deserialization|null $deserialization */
         $deserialization = $this->annotationReader->getMethodAnnotation($methodReflection, Deserialization::class);
-        /** @var Validation|null $validation */
         $validation = $this->annotationReader->getMethodAnnotation($methodReflection, Validation::class);
         /** @var list<QueryParam> $queryParameters */
         $queryParameters = \array_filter(

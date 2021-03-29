@@ -67,7 +67,6 @@ class RequestConfigurationSubscriber implements EventSubscriberInterface
         null !== $validation && $request->attributes->set(self::ATTRIBUTE_API_VALIDATION, $validation);
 
         $queryParams = [];
-        /** @var object $queryParam */
         foreach ($this->annotationsReader->getMethodAnnotations($methodReflection) as $queryParam) {
             if ($queryParam instanceof QueryParam) {
                 if (\array_key_exists($queryParam->getName(), $queryParams)) {
