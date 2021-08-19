@@ -14,7 +14,7 @@ final class Helper
         return \ltrim(\preg_replace_callback(
             '/([A-Z])/',
             /**
-             * @param array<int, string> $matches
+             * @param array<string> $matches
              */
             static function (array $matches): string {
                 return ' '.\lcfirst($matches[1]);
