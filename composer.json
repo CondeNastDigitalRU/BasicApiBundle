@@ -27,6 +27,7 @@
     },
     "require-dev": {
         "ext-json": "*",
+        "doctrine/cache": "^2.1",
         "friendsofphp/php-cs-fixer": "^3",
         "nelmio/api-doc-bundle": "^4",
         "symfony/asset": "^5.1",
