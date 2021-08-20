@@ -13,10 +13,10 @@ use Nelmio\ApiDocBundle\Model\ModelRegistry;
 use Nelmio\ApiDocBundle\OpenApiPhp\Util;
 use Nelmio\ApiDocBundle\RouteDescriber\RouteDescriberInterface;
 use Nelmio\ApiDocBundle\RouteDescriber\RouteDescriberTrait;
-use Nelmio\ApiDocBundle\Util\ControllerReflector;
 use OpenApi\Annotations as OA;
 use Symfony\Component\PropertyInfo\Type as PropertyInfoType;
 use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
@@ -31,16 +31,19 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     /** @var Reader */
     private $annotationReader;
 
-    /** @var ControllerReflector */
-    private $controllerReflector;
-
     /** @var ModelRegistry */
     private $modelRegistry;
 
-    public function __construct(Reader $annotationReader, ControllerReflector $controllerReflector)
+    /** @var array<RouteCollection> */
+    private $routeCollections;
+
+    /**
+     * @param array<RouteCollection> $routeCollections
+     */
+    public function __construct(Reader $annotationReader, array $routeCollections)
     {
         $this->annotationReader = $annotationReader;
-        $this->controllerReflector = $controllerReflector;
+        $this->routeCollections = $routeCollections;
     }
 
     public function setModelRegistry(ModelRegistry $modelRegistry): void
@@ -50,28 +53,11 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
     public function describe(OA\OpenApi $api, Route $route, \ReflectionMethod $reflectionMethod): void
     {
-        $controller = $route->getDefault('_controller');
-
-        if (!\is_string($controller)) {
-            return;
-        }
-
-        /**
-         * @psalm-suppress InternalMethod
-         * @var \ReflectionMethod|null
-         */
-        $methodReflection = $this->controllerReflector->getReflectionMethod($controller);
-
-        if (null === $methodReflection) {
-            return;
-        }
-
-        $resource = $this->annotationReader->getMethodAnnotation($methodReflection, Resource::class);
-        $deserialization = $this->annotationReader->getMethodAnnotation($methodReflection, Deserialization::class);
-        $validation = $this->annotationReader->getMethodAnnotation($methodReflection, Validation::class);
-        /** @var list<QueryParam> $queryParameters */
+        $resource = $this->annotationReader->getMethodAnnotation($reflectionMethod, Resource::class);
+        $deserialization = $this->annotationReader->getMethodAnnotation($reflectionMethod, Deserialization::class);
+        $validation = $this->annotationReader->getMethodAnnotation($reflectionMethod, Validation::class);
         $queryParameters = \array_filter(
-            $this->annotationReader->getMethodAnnotations($methodReflection),
+            $this->annotationReader->getMethodAnnotations($reflectionMethod),
             static function (object $annotation): bool {
                 return $annotation instanceof QueryParam;
             }
@@ -79,27 +65,27 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
         /** @psalm-suppress InternalMethod */
         foreach ($this->getOperations($api, $route) as $operation) {
-            null !== $resource && $this->describeOperation($operation, $resource);
+            null !== $resource && $this->describeOperation($route, $operation, $resource);
             null !== $deserialization && $this->describeRequestBody($operation, $deserialization);
             null !== $deserialization && null !== $validation && $this->describeValidationResponse($operation);
             $this->describeQueryParams($operation, $queryParameters);
         }
     }
 
-    private function describeOperation(OA\Operation $operation, Resource $resource): void
+    private function describeOperation(Route $route, OA\Operation $operation, Resource $resource): void
     {
         Util::merge(
             $operation,
             [
                 'tags' => [$resource->getName()],
-                'operationId' => \sprintf('%s %s', $operation->method, $operation->path),
+                'operationId' => StringHelper::slugify($this->getRouteName($route).'-'.$operation->method),
             ]
         );
     }
 
     private function describeRequestBody(OA\Operation $operation, Deserialization $deserialization): void
     {
-        /** @var list<string> $groups */
+        /** @var array<string> $groups */
         $groups = (array) ($deserialization->getContext()['groups'] ?? []);
 
         /** @psalm-suppress ArgumentTypeCoercion */
@@ -123,7 +109,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     }
 
     /**
-     * @param list<QueryParam> $queryParams
+     * @param array<QueryParam> $queryParams
      */
     private function describeQueryParams(OA\Operation $operation, array $queryParams): void
     {
@@ -166,7 +152,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
     /**
      * @param OA\RequestBody|OA\Response $body
-     * @param list<string> $groups
+     * @param array<string> $groups
      */
     private function describeMediaType($body, string $type, array $groups = []): void
     {
@@ -203,7 +189,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     }
 
     /**
-     * @param list<string> $groups
+     * @param array<string> $groups
      */
     private function registerModel(string $type, array $groups = []): string
     {
@@ -214,7 +200,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     }
 
     /**
-     * @param list<Constraint> $constraints
+     * @param array<Constraint> $constraints
      */
     private function extractEnum(array $constraints): ?array
     {
@@ -224,14 +210,14 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
             return null;
         }
 
-        /** @var list<string> $enum */
+        /** @var array<string> $enum */
         $enum = \is_callable($constraint->callback) ? ($constraint->callback)() : $constraint->choices;
 
         return $enum;
     }
 
     /**
-     * @param list<Constraint> $constraints
+     * @param array<Constraint> $constraints
      */
     private function extractPattern(array $constraints): ?string
     {
@@ -263,28 +249,28 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     }
 
     /**
-     * @param list<Constraint> $constraints
-     * @return list<string>
+     * @param array<Constraint> $constraints
+     * @return array<string>
      */
     private function extractRequirements(array $constraints): array
     {
         $requirements = [];
 
         foreach ($constraints as $constraint) {
-            $title = Helper::camelCaseToSentence((new \ReflectionClass($constraint))->getShortName());
+            $title = StringHelper::toSentence((new \ReflectionClass($constraint))->getShortName());
             switch (true) {
                 case $constraint instanceof Constraints\AbstractComparison:
                     $requirements[] = \sprintf(
                         '%s: %s',
                         $title,
-                        Helper::toString($constraint->value)
+                        StringHelper::toString($constraint->value)
                     );
                     break;
                 case $constraint instanceof Constraints\Type:
                     $requirements[] = \sprintf(
                         '%s: %s',
                         $title,
-                        Helper::toString($constraint->type)
+                        StringHelper::toString($constraint->type)
                     );
                     break;
                 case $constraint instanceof Constraints\Length:
@@ -317,7 +303,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
         $format = null;
 
         foreach ($queryParam->getConstraints() as $constraint) {
-            $title = Helper::camelCaseToSentence((new \ReflectionClass($constraint))->getShortName());
+            $title = StringHelper::toSentence((new \ReflectionClass($constraint))->getShortName());
 
             switch (true) {
                 case $constraint instanceof Constraints\Bic:
@@ -350,7 +336,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
     /**
      * @template T of Constraint
-     * @param list<Constraint> $constraints
+     * @param array<Constraint> $constraints
      * @param class-string<T> $class
      * @return T|null
      */
@@ -362,5 +348,18 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
                 return \is_a($constraint, $class);
             }
         )) ?: null;
+    }
+
+    private function getRouteName(Route $route): string
+    {
+        foreach ($this->routeCollections as $routeCollection) {
+            foreach ($routeCollection->all() as $name => $collectionRoute) {
+                if ($collectionRoute === $route) {
+                    return (string) $name;
+                }
+            }
+        }
+
+        throw new \InvalidArgumentException('Unable to found route name');
     }
 }

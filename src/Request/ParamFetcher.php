@@ -28,7 +28,7 @@ class ParamFetcher
     }
 
     /**
-     * @param list<Constraint> $constraints
+     * @param array<Constraint> $constraints
      * @param mixed $default
      * @return mixed Parameter value or default value if parameter value does not exist or does not meet requirements
      */

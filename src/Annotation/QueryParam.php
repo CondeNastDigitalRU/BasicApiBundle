@@ -29,7 +29,7 @@ class QueryParam
     /** @var bool */
     private $isArray;
 
-    /** @var list<Constraint> */
+    /** @var array<Constraint> */
     private $constraints;
 
     /** @var mixed */
@@ -46,7 +46,7 @@ class QueryParam
      *     name: string,
      *     path: string|null,
      *     isArray: boolean,
-     *     constraints: list<Constraint>,
+     *     constraints: array<Constraint>,
      *     default: mixed,
      *     description: string|null,
      *     format: string|null
@@ -102,7 +102,7 @@ class QueryParam
     }
 
     /**
-     * @return list<Constraint>
+     * @return array<Constraint>
      */
     public function getConstraints(): array
     {
