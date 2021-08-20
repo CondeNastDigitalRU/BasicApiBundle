@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-return PhpCsFixer\Config::create()
+return (new PhpCsFixer\Config())
     ->setRules([
         '@PSR2' => true,
         '@PHP71Migration' => true,
@@ -11,7 +11,7 @@ return PhpCsFixer\Config::create()
     ])
     ->setRiskyAllowed(true)
     ->setFinder(
-        PhpCsFixer\Finder::create()
+        (new PhpCsFixer\Finder())
             ->in([
                 __DIR__.'/src',
                 __DIR__.'/tests',

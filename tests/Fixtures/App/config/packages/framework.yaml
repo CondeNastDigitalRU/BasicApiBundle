@@ -2,6 +2,6 @@ framework:
     test: true
     secret: '%env(APP_SECRET)%'
     annotations:
-        cache: file
+        cache: php_array
     router:
         utf8: true
