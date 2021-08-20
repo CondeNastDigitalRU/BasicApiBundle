@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class Payload
 {
-    /** @var array|object|null */
+    /** @var iterable|object|null */
     private $data;
 
     /** @var int */
@@ -19,7 +19,7 @@ class Payload
     private $headers;
 
     /**
-     * @param array|object|null $data
+     * @param iterable|object|null $data
      */
     public function __construct($data, int $status = 200, array $serializationContext = [], array $headers = [])
     {
@@ -30,7 +30,7 @@ class Payload
     }
 
     /**
-     * @return array|object|null
+     * @return iterable|object|null
      */
     public function getData()
     {
@@ -38,7 +38,7 @@ class Payload
     }
 
     /**
-     * @param array|object|null $data
+     * @param iterable|object|null $data
      */
     public function setData($data): void
     {
