@@ -39,7 +39,7 @@ class RequestValidationSubscriber implements EventSubscriberInterface
             return;
         }
 
-        /** @var object|list<object>|null $deserialized */
+        /** @var object|array<object>|null $deserialized */
         $deserialized = $request->attributes->get($deserialization->getArgument());
 
         if (null === $deserialized) {

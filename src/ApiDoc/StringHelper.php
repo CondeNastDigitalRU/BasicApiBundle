@@ -2,25 +2,24 @@
 
 namespace Condenast\BasicApiBundle\ApiDoc;
 
-final class Helper
+use Symfony\Component\String\Slugger\AsciiSlugger;
+use function Symfony\Component\String\u;
+
+class StringHelper
 {
-    public static function camelCaseToSentence(string $camelCase): string
+    public static function toSentence(string $string): string
     {
-        return \ucfirst(self::camelCaseToWords($camelCase));
+        return (string) u(self::toWords($string))->title();
     }
 
-    public static function camelCaseToWords(string $camelCase): string
+    public static function toWords(string $string): string
     {
-        return \ltrim(\preg_replace_callback(
-            '/([A-Z])/',
-            /**
-             * @param array<int, string> $matches
-             */
-            static function (array $matches): string {
-                return ' '.\lcfirst($matches[1]);
-            },
-            $camelCase
-        ), ' ');
+        return (string) u($string)->snake()->replace('_', ' ');
+    }
+
+    public static function slugify(string $string): string
+    {
+        return (string) (new AsciiSlugger())->slug($string);
     }
 
     /**

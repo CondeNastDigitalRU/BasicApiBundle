@@ -11,11 +11,11 @@ namespace Condenast\BasicApiBundle\Annotation;
  */
 class Validation
 {
-    /** @var list<string> */
+    /** @var array<string> */
     private $groups;
 
     /**
-     * @param array{groups: list<string>} $values
+     * @param array{groups: array<string>} $values
      */
     public function __construct(array $values)
     {

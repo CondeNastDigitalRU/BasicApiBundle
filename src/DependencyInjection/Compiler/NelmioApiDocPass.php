@@ -20,12 +20,18 @@ class NelmioApiDocPass implements CompilerPassInterface
                     ->addTag('nelmio_api_doc.model_describer', ['priority' => 128])
             );
 
+            /** @psalm-suppress PossiblyInvalidArgument */
             $container->setDefinition(
                 'condenast_basic_api.apidoc.describer.route.api',
                 (new Definition(ApiRouteDescriber::class))
                     ->setArguments([
                         new Reference('annotations.reader'),
-                        new Reference('nelmio_api_doc.controller_reflector')
+                        \array_map(
+                            static function (string $area): Reference {
+                                return new Reference(\sprintf('nelmio_api_doc.routes.%s', $area));
+                            },
+                            $container->getParameter('nelmio_api_doc.areas')
+                        )
                     ])
                     ->addTag('nelmio_api_doc.route_describer', ['priority' => -256])
             );
