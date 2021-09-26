@@ -1,9 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types=1);
 
 namespace Condenast\BasicApiBundle\Annotation;
 
 use Doctrine\Common\Annotations\Annotation\Attribute;
 use Symfony\Component\Validator\Constraint;
+use Webmozart\Assert\Assert;
 
 /**
  * @Annotation
@@ -18,6 +20,7 @@ use Symfony\Component\Validator\Constraint;
  *     @Attribute("description", type="string")
  * })
  */
+#[\Attribute(\Attribute::TARGET_METHOD)]
 class QueryParam
 {
     /** @var string */
@@ -50,26 +53,61 @@ class QueryParam
      *     default: mixed,
      *     description: string|null,
      *     format: string|null
-     * } $values
+     *     } $data
      */
-    public function __construct(array $values)
-    {
-        if ('' === $values['name']) {
+    public function __construct(
+        array $data = [],
+        string $name = '',
+        ?string $path = null,
+        bool $isArray = false,
+        array $constraints = [],
+        $default = null,
+        ?string $description = null,
+        ?string $format = null
+    ) {
+        $deprecation = false;
+        foreach ($data as $key => $val) {
+            if (\in_array($key, ['values', 'name', 'path', 'isArray', 'constraints', 'default', 'description', 'format']
+            )) {
+                $deprecation = true;
+            }
+        }
+
+        if ($deprecation) {
+            trigger_deprecation(
+                'Condenast\BasicApiBundle',
+                '2.1',
+                'Passing an array as first argument to "%s" is deprecated. Use named arguments instead.',
+                __METHOD__
+            );
+        }
+
+        $data['name'] = $data['name'] ?? $name;
+        $data['path'] = $data['path'] ?? $path;
+        $data['isArray'] = $data['isArray'] ?? $isArray;
+        $data['constraints'] = $data['constraints'] ?? $constraints;
+        $data['default'] = $data['default'] ?? $default;
+        $data['description'] = $data['description'] ?? $description;
+        $data['format'] = $data['format'] ?? $format;
+
+        Assert::allIsInstanceOf($data['constraints'], Constraint::class);
+
+        if ('' === $data['name']) {
             throw new \InvalidArgumentException('The "name" attribute must be a non-empty string');
         }
-        $this->name = $values['name'];
+        $this->name = $data['name'];
 
-        if ('' === ($values['path'] ?? null)) {
+        if ('' === ($data['path'] ?? null)) {
             throw new \InvalidArgumentException('The "path" attribute must be a non-empty string or null');
         }
-        $this->path = $values['path'] ?? $values['name'];
+        $this->path = $data['path'] ?? $data['name'];
 
-        $this->isArray = $values['isArray'] ?? false;
-        $this->constraints = $values['constraints'] ?? [];
+        $this->isArray = $data['isArray'] ?? false;
+        $this->constraints = $data['constraints'] ?? [];
         $default = $this->isArray ? [] : null;
-        $this->default = \array_key_exists('default', $values) ? $values['default'] : $default;
-        $this->description = $values['description'] ?? '';
-        $this->format = $values['format'] ?? '';
+        $this->default = \array_key_exists('default', $data) ? $data['default'] : $default;
+        $this->description = $data['description'] ?? '';
+        $this->format = $data['format'] ?? '';
     }
 
     public function getName(): string

@@ -57,13 +57,13 @@ class RequestConfigurationSubscriber implements EventSubscriberInterface
 
         $request = $event->getRequest();
 
-        $resource = $this->annotationsReader->getMethodAnnotation($methodReflection, Resource::class);
+        $resource = $this->getAnnotation($methodReflection, Resource::class);
         null !== $resource && $request->attributes->set(self::ATTRIBUTE_API_RESOURCE, $resource);
 
-        $deserialization = $this->annotationsReader->getMethodAnnotation($methodReflection, Deserialization::class);
+        $deserialization = $this->getAnnotation($methodReflection, Deserialization::class);
         null !== $deserialization && $request->attributes->set(self::ATTRIBUTE_API_DESERIALIZATION, $deserialization);
 
-        $validation = $this->annotationsReader->getMethodAnnotation($methodReflection, Validation::class);
+        $validation = $this->getAnnotation($methodReflection, Validation::class);
         null !== $validation && $request->attributes->set(self::ATTRIBUTE_API_VALIDATION, $validation);
 
         $queryParams = [];
@@ -91,4 +91,15 @@ class RequestConfigurationSubscriber implements EventSubscriberInterface
         $request->setRequestFormat('json');
         $request->attributes->set(self::ATTRIBUTE_API, true);
     }
+
+	private function getAnnotation(\ReflectionMethod $reflection, string $annotationClass)
+	{
+		if (\PHP_VERSION_ID >= 80000) {
+			foreach ($reflection->getAttributes($annotationClass) as $attribute) {
+				return $attribute->newInstance();
+			}
+		}
+
+		return $this->annotationsReader->getMethodAnnotation($reflection, $annotationClass);
+	}
 }
