@@ -12,6 +12,7 @@ namespace Condenast\BasicApiBundle\Annotation;
  *     @Attribute("requestAttributes", type="array"),
  * })
  */
+#[\Attribute(\Attribute::TARGET_METHOD)]
 class Deserialization
 {
     /** @var string */
@@ -27,23 +28,38 @@ class Deserialization
     private $requestAttributes;
 
     /**
-     * @param array{argument: string, type: string, context: array|null, requestAttributes: array<string, string>|null} $values
+     * @param array{argument: string, type: string, context: array|null, requestAttributes: array<string, string>|null} $data
      */
-    public function __construct(array $values)
+	public function __construct(array $data = [], string $argument = '', string $type = '', array $context = [], array $requestAttributes = [])
     {
-        if ('' === $values['argument']) {
+		$deprecation = false;
+		foreach ($data as $key => $val) {
+			if (\in_array($key, ['argument', 'type', 'context', 'requestAttributes'])) {
+				$deprecation = true;
+			}
+		}
+
+		if ($deprecation) {
+			trigger_deprecation('Condenast\BasicApiBundle', '2.1', 'Passing an array as first argument to "%s" is deprecated. Use named arguments instead.', __METHOD__);
+		}
+
+		$data['argument'] = $data['argument'] ?? $argument;
+		$data['type'] = $data['type'] ?? $type;
+		$data['context'] = $data['context'] ?? $context;
+		$data['requestAttributes'] = $data['requestAttributes'] ?? $requestAttributes;
+
+        if ('' === $data['argument']) {
             throw new \InvalidArgumentException('The "argument" attribute must be a non-empty string');
         }
-        $this->argument = $values['argument'];
 
-        if ('' === $values['type']) {
+        if ('' === $data['type']) {
             throw new \InvalidArgumentException('The "type" attribute must be a non-empty string');
         }
-        $this->type = $values['type'];
 
-        $this->context = $values['context'] ?? [];
-
-        $this->requestAttributes = $values['requestAttributes'] ?? [];
+		$this->argument = $data['argument'];
+        $this->type = $data['type'];
+        $this->context = $data['context'] ?? [];
+        $this->requestAttributes = $data['requestAttributes'] ?? [];
     }
 
     public function getArgument(): string
