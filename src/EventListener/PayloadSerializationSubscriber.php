@@ -11,12 +11,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class PayloadSerializationSubscriber implements EventSubscriberInterface
 {
-    /** @var SerializerInterface */
-    protected $serializer;
-
-    public function __construct(SerializerInterface $serializer)
+    public function __construct(private SerializerInterface $serializer)
     {
-        $this->serializer = $serializer;
     }
 
     public static function getSubscribedEvents(): array

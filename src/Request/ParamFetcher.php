@@ -11,28 +11,17 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ParamFetcher
 {
-    /** @var array<array-key, mixed> */
-    protected $parameters;
-
-    /** @var PropertyAccessorInterface */
-    protected $propertyAccessor;
-
-    /** @var ValidatorInterface */
-    protected $validator;
-
-    public function __construct(array $parameters, PropertyAccessorInterface $propertyAccessor, ValidatorInterface $validator)
+    /**
+     * @param array<array-key, mixed> $parameters
+     */
+    public function __construct(private array $parameters, private PropertyAccessorInterface $propertyAccessor, private ValidatorInterface $validator)
     {
-        $this->parameters = $parameters;
-        $this->propertyAccessor = $propertyAccessor;
-        $this->validator = $validator;
     }
 
     /**
      * @param array<Constraint> $constraints
-     * @param mixed $default
-     * @return mixed Parameter value or default value if parameter value does not exist or does not meet requirements
      */
-    public function get(string $path, array $constraints = [], bool $isArray = false, $default = null)
+    public function get(string $path, array $constraints = [], bool $isArray = false, mixed $default = null): mixed
     {
         try {
             /** @var mixed $value */

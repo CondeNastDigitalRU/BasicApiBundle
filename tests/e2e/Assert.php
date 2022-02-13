@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Condenast\BasicApiBundle\Tests\Functional;
+namespace Condenast\BasicApiBundle\Tests\e2e;
 
 use Symfony\Component\HttpFoundation\Response;
 

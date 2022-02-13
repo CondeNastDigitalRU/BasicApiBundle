@@ -2,9 +2,9 @@
 
 namespace Condenast\BasicApiBundle\Tests\Unit;
 
-use Condenast\BasicApiBundle\Annotation\Deserialization;
-use Condenast\BasicApiBundle\Annotation\QueryParam;
-use Condenast\BasicApiBundle\Annotation\Validation;
+use Condenast\BasicApiBundle\Attribute\Deserialization;
+use Condenast\BasicApiBundle\Attribute\QueryParam;
+use Condenast\BasicApiBundle\Attribute\Validation;
 use Condenast\BasicApiBundle\EventListener\RequestConfigurationSubscriber;
 use Condenast\BasicApiBundle\Response\Payload;
 use PHPUnit\Framework\MockObject\Generator;
@@ -98,26 +98,27 @@ final class ObjectMother
 
     public static function deserialization(): Deserialization
     {
-        return new Deserialization([
-            'argument' => 'argument',
-            'type' => 'ClassName',
-            'context' => ['groups' => ['group']],
-            'requestAttributes' => ['attribute' => 'property'],
-        ]);
+        return new Deserialization(
+            'argument',
+            'ClassName',
+            ['groups' => ['group']],
+            ['attribute' => 'property'],
+        );
     }
 
     public static function validation(): Validation
     {
-        return new Validation(['groups' => ['group']]);
+        return new Validation(['group']);
     }
 
     public static function queryParam(): QueryParam
     {
-        return new QueryParam([
-            'name' => 'name',
-            'path' => 'path',
-            'default' => 'default',
-        ]);
+        return new QueryParam(
+            'name',
+            'path',
+            false,
+            [],
+        );
     }
 
     public static function viewEvent(Request $request, $controllerResult): ViewEvent

@@ -2,11 +2,11 @@
 
 namespace Condenast\BasicApiBundle\Tests\Fixtures\App\Controller;
 
-use Condenast\BasicApiBundle\Annotation as Api;
+use Condenast\BasicApiBundle\Attribute as Api;
 use Condenast\BasicApiBundle\Request\QueryParamBag;
 use Condenast\BasicApiBundle\Response\Payload;
 use Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article;
-use Condenast\BasicApiBundle\Tests\Functional\ObjectMother;
+use Condenast\BasicApiBundle\Tests\e2e\ObjectMother;
 use Nelmio\ApiDocBundle\Annotation as Nelmio;
 use OpenApi\Annotations as OA;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -17,42 +17,47 @@ class ApiController
 {
     /**
      * Query params
-     *
-     * @Route(
-     *     "/query_params",
-     *     name="app.query_params",
-     *     methods={"GET"},
-     * )
-     * @Api\Resource("Query params")
-     * @Api\QueryParam(
-     *     name="id",
-     *     path="filter.id",
-     *     default=1,
-     *     constraints={@Assert\GreaterThan(0), @Assert\LessThan(100), @Assert\Regex("/\d+/")},
-     *     description="Id",
-     * )
-     * @Api\QueryParam(
-     *     name="ids",
-     *     path="filter.ids",
-     *     default={1},
-     *     constraints={@Assert\GreaterThan(0)},
-     *     isArray=true,
-     *     description="Ids"
-     * )
-     * @Api\QueryParam(
-     *     name="sorting_id",
-     *     path="soring.id",
-     *     default="ASC",
-     *     constraints={@Assert\Choice({"ASC", "DESC"})},
-     *     description="Sort by ID"
-     * )
-     * @Api\QueryParam(
-     *     name="email",
-     *     default=null,
-     *     constraints={@Assert\Email},
-     *     description="Email",
-     * )
      */
+    #[Route(path: "/query_params", name: "app.query_params", methods: ["GET"])]
+    #[Api\Resource("Query params")]
+    #[Api\QueryParam(
+        name: "id",
+        path: "filter.id",
+        constraints: [
+            new Assert\GreaterThan(0),
+            new Assert\LessThan(100),
+            new Assert\Regex("/\d+/"),
+        ],
+        default: 1,
+        description: "Id",
+    )]
+    #[Api\QueryParam(
+        name: "ids",
+        path: "filter.ids",
+        isArray: true,
+        constraints: [
+            new Assert\GreaterThan(0),
+        ],
+        default: [1],
+        description: "Ids",
+    )]
+    #[Api\QueryParam(
+        name: "sorting_id",
+        path: "sorting.id",
+        constraints: [
+            new Assert\Choice(["ASC", "DESC"]),
+        ],
+        default: "ASC",
+        description: "Sort by id",
+    )]
+    #[Api\QueryParam(
+        name: "email",
+        constraints: [
+            new Assert\Email(),
+        ],
+        default: null,
+        description: "Email",
+    )]
     public function queryParams(QueryParamBag $query): Payload
     {
         return new Payload($query->all());
@@ -61,13 +66,6 @@ class ApiController
     /**
      * Get article
      *
-     * @Route(
-     *     "/articles/{id}",
-     *     name="app.articles.get",
-     *     methods={"GET"},
-     *     requirements={"id": "\d+"}
-     * )
-     * @Api\Resource("Article")
      * @OA\Response(
      *     response=200,
      *     description="Article",
@@ -77,6 +75,8 @@ class ApiController
      *     )
      * )
      */
+    #[Route(path: "/articles/{id}", name: "app.articles.get", requirements: ["id" => "\d+"], methods: ["GET"])]
+    #[Api\Resource("Article")]
     public function getArticle(): Payload
     {
         return new Payload(ObjectMother::alpacaArticle(), 200, ['groups' => 'article.read'], ['Awesome-Header' => 'Value']);
@@ -85,12 +85,6 @@ class ApiController
     /**
      * Get articles
      *
-     * @Route(
-     *     "/articles",
-     *     name="app.articles.cget",
-     *     methods={"GET"}
-     * )
-     * @Api\Resource("Article")
      * @OA\Response(
      *     response=200,
      *     description="Articles",
@@ -100,6 +94,8 @@ class ApiController
      *     )
      * )
      */
+    #[Route(path: "/articles", name: "app.articles.cget", methods: ["GET"])]
+    #[Api\Resource("Article")]
     public function getArticles(): Payload
     {
         return new Payload(ObjectMother::articles(), 200, ['groups' => 'article.read']);
@@ -108,14 +104,6 @@ class ApiController
     /**
      * Create article
      *
-     * @Route(
-     *     "/articles",
-     *     name="app.articles.post",
-     *     methods={"POST"}
-     * )
-     * @Api\Resource("Article")
-     * @Api\Deserialization(argument="article", type=Article::class, context={"groups": "article.write"})
-     * @Api\Validation(groups={"article.write"})
      * @OA\Response(
      *     response=201,
      *     description="Created article",
@@ -125,6 +113,10 @@ class ApiController
      *     )
      * )
      */
+    #[Route(path: "/articles", name: "app.articles.post", methods: ["POST"])]
+    #[Api\Resource("Article")]
+    #[Api\Deserialization(argument: "article", type: Article::class, context: ["groups" => "article.write"])]
+    #[Api\Validation(groups: ["article.write"])]
     public function postArticle(Article $article): Payload
     {
         return new Payload($article, 201, ['groups' => 'article.read']);
@@ -133,18 +125,6 @@ class ApiController
     /**
      * Create articles
      *
-     * @Route(
-     *     "/articles/batch",
-     *     name="app.articles.post.batch",
-     *     methods={"POST"}
-     * )
-     * @Api\Resource("Article")
-     * @Api\Deserialization(
-     *     argument="articles",
-     *     type="Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article[]",
-     *     context={"groups": "article.write"}
-     * )
-     * @Api\Validation(groups={"article.write"})
      * @OA\Response(
      *     response=200,
      *     description="Articles",
@@ -155,6 +135,10 @@ class ApiController
      * )
      * @param list<Article> $articles
      */
+    #[Route(path: "/articles/batch", name: "app.articles.post.batch", methods: ["POST"])]
+    #[Api\Resource("Article")]
+    #[Api\Deserialization(argument: "articles", type: "Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article[]", context: ["groups" => "article.write"])]
+    #[Api\Validation(groups: ["article.write"])]
     public function postArticleBatch(array $articles): Payload
     {
         return new Payload($articles, 201, ['groups' => 'article.read']);
@@ -162,14 +146,9 @@ class ApiController
 
     /**
      * Throw exception
-     *
-     * @Route(
-     *     "/exception",
-     *     name="app.exception",
-     *     methods={"GET"}
-     * )
-     * @Api\Resource("Exception")
      */
+    #[Route(path: "/exception", name: "app.exception", methods: ["GET"])]
+    #[Api\Resource("Exception")]
     public function throwException(): void
     {
         throw new \RuntimeException('Message');
@@ -177,14 +156,9 @@ class ApiController
 
     /**
      * Throw http exception
-     *
-     * @Route(
-     *     "/http_exception",
-     *     name="app.http_exception",
-     *     methods={"GET"}
-     * )
-     * @Api\Resource("Exception")
      */
+    #[Route(path: "/http_exception", name: "app.http_exception", methods: ["GET"])]
+    #[Api\Resource("Exception")]
     public function throwHttpException(): void
     {
         throw new AccessDeniedHttpException('Access denied');
@@ -192,14 +166,9 @@ class ApiController
 
     /**
      * Empty payload
-     *
-     * @Route(
-     *     "/empty_payload",
-     *     name="app.empty_payload",
-     *     methods={"GET"}
-     * )
-     * @Api\Resource("Emtpty payload")
      */
+    #[Route(path: "/empty_payload", name: "app.empty_payload", methods: ["GET"])]
+    #[Api\Resource("Empty payload")]
     public function emptyPayload(): Payload
     {
         return new Payload(null, 204);

@@ -1,10 +1,10 @@
 Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Tag:
-    attributes:
-        name:
-            groups:
-                - article.read
-                - article.write
-        slug:
-            groups:
-                - article.read
-                - article.write
+  attributes:
+    name:
+      groups:
+        - article.read
+        - article.write
+    slug:
+      groups:
+        - article.read
+        - article.write

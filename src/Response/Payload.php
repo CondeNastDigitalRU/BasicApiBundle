@@ -9,23 +9,15 @@ class Payload
     /** @var iterable|object|null */
     private $data;
 
-    /** @var int */
-    private $status;
-
-    /** @var array */
-    private $serializationContext;
-
     /** @var ResponseHeaderBag */
     private $headers;
 
     /**
      * @param iterable|object|null $data
      */
-    public function __construct($data, int $status = 200, array $serializationContext = [], array $headers = [])
+    public function __construct($data, private int $status = 200, private array $serializationContext = [], array $headers = [])
     {
         $this->setData($data);
-        $this->status = $status;
-        $this->serializationContext = $serializationContext;
         $this->headers = new ResponseHeaderBag($headers);
     }
 

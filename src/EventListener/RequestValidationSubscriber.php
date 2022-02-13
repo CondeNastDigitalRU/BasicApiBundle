@@ -2,8 +2,8 @@
 
 namespace Condenast\BasicApiBundle\EventListener;
 
-use Condenast\BasicApiBundle\Annotation\Deserialization;
-use Condenast\BasicApiBundle\Annotation\Validation;
+use Condenast\BasicApiBundle\Attribute\Deserialization;
+use Condenast\BasicApiBundle\Attribute\Validation;
 use Condenast\BasicApiBundle\Response\Payload;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -12,12 +12,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RequestValidationSubscriber implements EventSubscriberInterface
 {
-    /** @var ValidatorInterface */
-    private $validator;
-
-    public function __construct(ValidatorInterface $validator)
+    public function __construct(private ValidatorInterface $validator)
     {
-        $this->validator = $validator;
     }
 
     public static function getSubscribedEvents(): array
@@ -40,7 +36,7 @@ class RequestValidationSubscriber implements EventSubscriberInterface
         }
 
         /** @var object|array<object>|null $deserialized */
-        $deserialized = $request->attributes->get($deserialization->getArgument());
+        $deserialized = $request->attributes->get($deserialization->argument);
 
         if (null === $deserialized) {
             return;
@@ -49,7 +45,7 @@ class RequestValidationSubscriber implements EventSubscriberInterface
         $violations = $this->validator->validate(
             $deserialized,
             null,
-            $validation->getGroups()
+            $validation->groups
         );
 
         if (0 === $violations->count()) {

@@ -18,7 +18,7 @@ class QueryParamBagResolverTest extends TestCase
         $queryParam = ObjectMother::queryParam();
         $request = ObjectMother::queryParamsRequest(
             [$queryParam],
-            [$queryParam->getPath() => $value]
+            [$queryParam->path => $value]
         );
 
         $resolver = new QueryParamBagResolver(ObjectMother::propertyAccessor(), ObjectMother::validator());
@@ -26,6 +26,6 @@ class QueryParamBagResolverTest extends TestCase
         $bag = \current($resolver->resolve($request, ObjectMother::argumentMetadata()));
 
         self::assertInstanceOf(QueryParamBag::class, $bag);
-        self::assertSame($value, $bag->get($queryParam->getName()));
+        self::assertSame($value, $bag->get($queryParam->name));
     }
 }

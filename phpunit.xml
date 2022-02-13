@@ -8,7 +8,7 @@
   </php>
   <testsuites>
     <testsuite name="Functional">
-      <directory>tests/Functional</directory>
+      <directory>tests/e2e</directory>
     </testsuite>
     <testsuite name="Unit">
       <directory>tests/Unit</directory>

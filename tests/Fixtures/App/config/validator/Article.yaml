@@ -1,14 +1,14 @@
 Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article:
-    properties:
-        title:
-            -   Length:
-                    groups:
-                        - article.write
-                    min: 4
-                    max: 255
-        tags:
-            -   Valid: ~
-            -   Count:
-                    groups:
-                        - article.write
-                    min: 2
+  properties:
+    title:
+      -   Length:
+            groups:
+              - article.write
+            min: 4
+            max: 255
+    tags:
+      -   Valid: ~
+      -   Count:
+            groups:
+              - article.write
+            min: 2

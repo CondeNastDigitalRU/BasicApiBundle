@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Condenast\BasicApiBundle\Tests\Functional;
+namespace Condenast\BasicApiBundle\Tests\e2e;
 
 use Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article;
 use Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Tag;

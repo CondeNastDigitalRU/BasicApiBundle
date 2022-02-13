@@ -4,15 +4,11 @@ namespace Condenast\BasicApiBundle\Request;
 
 class QueryParamBag
 {
-    /** @var array<string, mixed> */
-    private $params;
-
     /**
      * @param array<string, mixed> $params
      */
-    public function __construct(array $params)
+    public function __construct(private array $params)
     {
-        $this->params = $params;
     }
 
     /**
