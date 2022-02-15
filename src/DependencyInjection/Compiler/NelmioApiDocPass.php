@@ -25,7 +25,6 @@ class NelmioApiDocPass implements CompilerPassInterface
                 'condenast_basic_api.apidoc.describer.route.api',
                 (new Definition(ApiRouteDescriber::class))
                     ->setArguments([
-                        new Reference('annotations.reader'),
                         \array_map(
                             static function (string $area): Reference {
                                 return new Reference(\sprintf('nelmio_api_doc.routes.%s', $area));

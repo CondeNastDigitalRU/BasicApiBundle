@@ -1,0 +1,44 @@
+on:
+  workflow_dispatch:
+
+name: CI
+
+jobs:
+  analysis:
+    name: Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@2.17.0
+        with:
+          php-version: 8.1
+          tools: composer:v2
+
+      - name: Composer install
+        run: composer install
+
+      - name: Php-cs-fixer
+        run: make php-cs-fixer
+
+      - name: Psalm
+        run: make psalm
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@2.17.0
+        with:
+          php-version: 8.1
+          tools: composer:v2
+
+      - name: Composer install
+        run: composer install
+
+      - name: Tests
+        run:  make tests

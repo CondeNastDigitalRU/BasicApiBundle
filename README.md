@@ -62,35 +62,6 @@ class ArticleController
     /**
      * Create article
      *
-     * @Route(
-     *     "/articles",
-     *     name="app.articles.post",
-     *     methods={"POST"}
-     * )
-     * @Api\Resource("Article") # Resource name used to group actions in API documentation
-     * @Api\Deserialization(
-     *     argument="article", # The argument of the controller method, the result of deserialization will be passed there
-     *     type=Article::class, # The type of deserialization, such as Article or Article [] for an array of articles
-     *     context={"groups": "article.write"} # Deserialization context,
-     *     requestAttributes={"id": "id"} # Request attributes to assign their values to the properties of the deserialized object
-     *                                    # It can be useful when, for example, in an edit action you deserialize the DTO, and the identifier of the entity is in the url
-     * )
-     * @Api\Validation(
-     *     groups={"article.write"} # Validation groups
-     * )
-     * @Api\QueryParam(
-     *     name="tags", # The name by which the parameter will be available in the QueryParamBag
-     *     path="extra.tags", # The path to the parameter in the request, if not specified, will be equal to the name.
-     *     map=true, # Whether the parameter is an array
-     *     constraints={ # Validation constraints
-               @Assert\Length(min=2),
-     *     },
-     *     default={}, # Default parameter value
-     *                 # If not specified, then null or an empty array, depending on whether the parameter is declared as an array
-     *                 # If the parameter value does not meet the requirements, the default value will be returned
-     *     description="Tags to associate with", # Description, for an API documentation only
-     *     format="uuid" # Format, for an API documentation only
-     * )
      * @OA\Response( # Response description, for an API documentation only
      *     response=201,
      *     description="Created article",
@@ -100,6 +71,29 @@ class ArticleController
      *     )
      * )
      */
+    #[Route(path: "/articles", name: "app.articles.post", methods: ["POST"])]
+    #[Api\Resource("Article")] # Resource name used to group actions in API documentation
+    #[Api\Deserialization(
+        argument: "articles", # The argument of the controller method, the result of deserialization will be passed there
+        type: Article::class, # The type of deserialization, such as Article or Article [] for an array of articles
+        context: ["groups" => "article.write"], # Deserialization context,
+        requestAttributes: ["id" => "id"] # Request attributes to assign their values to the properties of the deserialized object
+                                          # It can be useful when, for example, in an edit action you deserialize the DTO, and the identifier of the entity is in the url
+    )]
+    #[Api\Validation(groups: ["article.write"])] # Validation groups
+    #[Api\QueryParam(
+        name: "tags", # The name by which the parameter will be available in the QueryParamBag
+        path: "extra.tags", # The path to the parameter in the request, if not specified, will be equal to the name.
+        isArray: true, # Whether the parameter is an array
+        constraints: [ # Validation constraints
+            new Assert\Length(min=2),
+        ],
+        default: [], # Default parameter value
+                     # If not specified, then null or an empty array, depending on whether the parameter is declared as an array
+                     # If the parameter value does not meet the requirements, the default value will be returned
+        description: "Tags to associate with", # Description, for an API documentation only
+        format: "uuid" # Format, for an API documentation only
+    )]
     public function postArticle(Article $article, QueryParamBag $query): Payload
     {
         $tags = $query->get('tags');

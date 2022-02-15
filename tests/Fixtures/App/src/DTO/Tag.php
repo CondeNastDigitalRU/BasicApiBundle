@@ -4,9 +4,6 @@ namespace Condenast\BasicApiBundle\Tests\Fixtures\App\DTO;
 
 class Tag
 {
-    /** @var string|null */
-    public $name;
-
-    /** @var string|null */
-    public $slug;
+    public ?string $name = null;
+    public ?string $slug = null;
 }

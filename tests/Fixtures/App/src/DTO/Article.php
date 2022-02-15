@@ -2,14 +2,15 @@
 
 namespace Condenast\BasicApiBundle\Tests\Fixtures\App\DTO;
 
+use OpenApi\Annotations as OA;
+
 class Article
 {
-    /** @var int|null */
-    public $id;
+    public ?int $id = null;
+    public ?string $title = null;
 
-    /** @var string|null */
-    public $title;
-
-    /** @var Tag[]|null */
-    public $tags;
+    /**
+     * @OA\Property(type="array", @OA\Items(type="string"))
+     */
+    public array $tags = [];
 }

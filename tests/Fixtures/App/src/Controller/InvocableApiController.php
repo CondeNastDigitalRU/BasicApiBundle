@@ -2,10 +2,10 @@
 
 namespace Condenast\BasicApiBundle\Tests\Fixtures\App\Controller;
 
-use Condenast\BasicApiBundle\Annotation as Api;
+use Condenast\BasicApiBundle\Attribute as Api;
 use Condenast\BasicApiBundle\Response\Payload;
 use Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article;
-use Condenast\BasicApiBundle\Tests\Functional\ObjectMother;
+use Condenast\BasicApiBundle\Tests\e2e\ObjectMother;
 use Nelmio\ApiDocBundle\Annotation as Nelmio;
 use OpenApi\Annotations as OA;
 use Symfony\Component\Routing\Annotation\Route;
@@ -15,12 +15,6 @@ class InvocableApiController
     /**
      * Get best article
      *
-     * @Route(
-     *     "/articles/best",
-     *     name="app.articles.best",
-     *     methods={"GET"},
-     * )
-     * @Api\Resource("Article")
      * @OA\Response(
      *     response=200,
      *     description="Article",
@@ -30,6 +24,8 @@ class InvocableApiController
      *     )
      * )
      */
+    #[Route(path: "/articles/best", name: "app.articles.best", methods: ["GET"])]
+    #[Api\Resource("Article")]
     public function __invoke(): Payload
     {
         return new Payload(ObjectMother::alpacaArticle(), 200, ['groups' => 'article.read']);

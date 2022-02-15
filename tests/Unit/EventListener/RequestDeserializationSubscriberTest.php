@@ -28,14 +28,14 @@ final class RequestDeserializationSubscriberTest extends TestCase
         $serializer
             ->expects(self::once())
             ->method('deserialize')
-            ->with($request->getContent(), $deserialization->getType(), 'json', $deserialization->getContext())
+            ->with($request->getContent(), $deserialization->type, 'json', $deserialization->context)
             ->willReturn($deserialized);
 
         $subscriber = new RequestDeserializationSubscriber($serializer, ObjectMother::propertyAccessor());
 
         $subscriber->onKernelController($event);
 
-        self::assertSame($request->attributes->get($deserialization->getArgument()), $deserialized);
+        self::assertSame($request->attributes->get($deserialization->argument), $deserialized);
     }
 
     /**
@@ -122,7 +122,7 @@ final class RequestDeserializationSubscriberTest extends TestCase
     public function if_the_attribute_is_already_set_then_this_will_result_in_an_error(): void
     {
         $deserialization = ObjectMother::deserialization();
-        $event = ObjectMother::controllerEvent(ObjectMother::deserializationRequest($deserialization, null, [$deserialization->getArgument() => 'value']));
+        $event = ObjectMother::controllerEvent(ObjectMother::deserializationRequest($deserialization, null, [$deserialization->argument => 'value']));
 
         $serializer = $this->createMock(SerializerInterface::class);
         $serializer
@@ -130,7 +130,7 @@ final class RequestDeserializationSubscriberTest extends TestCase
             ->method('deserialize');
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage(\sprintf('An attribute with name "%s" is already present in the request', $deserialization->getArgument()));
+        $this->expectExceptionMessage(\sprintf('An attribute with name "%s" is already present in the request', $deserialization->argument));
 
         $subscriber = new RequestDeserializationSubscriber($serializer, ObjectMother::propertyAccessor());
 

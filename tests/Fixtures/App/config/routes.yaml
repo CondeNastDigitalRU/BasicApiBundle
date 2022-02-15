@@ -1,14 +1,14 @@
 controllers:
-    prefix: api
-    resource: ../src/Controller
-    type: annotation
+  prefix: api
+  resource: ../src/Controller
+  type: annotation
 
 app.swagger_ui:
-    path: /api/doc
-    methods: GET
-    defaults: { _controller: nelmio_api_doc.controller.swagger_ui }
+  path: /api/doc
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_ui }
 
 app.swagger:
-    path: /api/doc.json
-    methods: GET
-    defaults: { _controller: nelmio_api_doc.controller.swagger }
+  path: /api/doc.json
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger }

@@ -2,7 +2,7 @@
 
 namespace Condenast\BasicApiBundle\Request;
 
-use Condenast\BasicApiBundle\Annotation\QueryParam;
+use Condenast\BasicApiBundle\Attribute\QueryParam;
 use Condenast\BasicApiBundle\EventListener\RequestConfigurationSubscriber;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
@@ -12,16 +12,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class QueryParamBagResolver implements ArgumentValueResolverInterface
 {
-    /** @var PropertyAccessorInterface */
-    private $propertyAccessor;
-
-    /** @var ValidatorInterface */
-    private $validator;
-
-    public function __construct(PropertyAccessorInterface $propertyAccessor, ValidatorInterface $validator)
+    public function __construct(private PropertyAccessorInterface $propertyAccessor, private ValidatorInterface $validator)
     {
-        $this->propertyAccessor = $propertyAccessor;
-        $this->validator = $validator;
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
@@ -39,11 +31,11 @@ class QueryParamBagResolver implements ArgumentValueResolverInterface
 
         /** @psalm-suppress MixedAssignment */
         foreach ($queryParams as $queryParam) {
-            $fetchedParams[$queryParam->getName()] = $paramFetcher->get(
+            $fetchedParams[$queryParam->name] = $paramFetcher->get(
                 $queryParam->getQueryArrayPath(),
-                $queryParam->getConstraints(),
-                $queryParam->isArray(),
-                $queryParam->getDefault()
+                $queryParam->constraints,
+                $queryParam->isArray,
+                $queryParam->default
             );
         }
 

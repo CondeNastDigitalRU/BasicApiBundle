@@ -2,7 +2,7 @@
 
 namespace Condenast\BasicApiBundle\EventListener;
 
-use Condenast\BasicApiBundle\Annotation\Deserialization;
+use Condenast\BasicApiBundle\Attribute\Deserialization;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -14,16 +14,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class RequestDeserializationSubscriber implements EventSubscriberInterface
 {
-    /** @var SerializerInterface */
-    private $serializer;
-
-    /** @var PropertyAccessorInterface */
-    private $propertyAccessor;
-
-    public function __construct(SerializerInterface $serializer, PropertyAccessorInterface $propertyAccessor)
+    public function __construct(private SerializerInterface $serializer, private PropertyAccessorInterface $propertyAccessor)
     {
-        $this->serializer = $serializer;
-        $this->propertyAccessor = $propertyAccessor;
     }
 
     public static function getSubscribedEvents(): array
@@ -43,7 +35,7 @@ class RequestDeserializationSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $argument = $deserialization->getArgument();
+        $argument = $deserialization->argument;
 
         if ($request->attributes->has($argument)) {
             throw new \RuntimeException(\sprintf('An attribute with name "%s" is already present in the request', $argument));
@@ -53,9 +45,9 @@ class RequestDeserializationSubscriber implements EventSubscriberInterface
             /** @var object|array<object> $deserialized */
             $deserialized = $this->serializer->deserialize(
                 $request->getContent(),
-                $deserialization->getType(),
+                $deserialization->type,
                 'json',
-                $deserialization->getContext()
+                $deserialization->context
             );
         } catch (NotEncodableValueException $e) {
             throw new BadRequestHttpException('Request does not contain valid json', $e);
@@ -63,13 +55,13 @@ class RequestDeserializationSubscriber implements EventSubscriberInterface
             throw new BadRequestHttpException('Request can\'t be deserialized', $e);
         }
 
-        foreach ($deserialization->getRequestAttributes() as $attribute => $propertyPath) {
+        foreach ($deserialization->requestAttributes as $attribute => $propertyPath) {
             if (!$request->attributes->has($attribute)) {
                 continue;
             }
 
             /** @var mixed $attributeValue */
-            $attributeValue = $request->get($attribute);
+            $attributeValue = $request->attributes->get($attribute);
 
             if (\is_array($deserialized)) {
                 foreach ($deserialized as $item) {
@@ -83,10 +75,7 @@ class RequestDeserializationSubscriber implements EventSubscriberInterface
         $request->attributes->set($argument, $deserialized);
     }
 
-    /**
-     * @param mixed $value
-     */
-    private function setRequestAttribute(object $deserialized, string $propertyPath, $value): void
+    private function setRequestAttribute(object $deserialized, string $propertyPath, mixed $value): void
     {
         if (!$this->propertyAccessor->isWritable($deserialized, $propertyPath)) {
             throw new \RuntimeException(\sprintf(

@@ -1,14 +1,14 @@
 Condenast\BasicApiBundle\Tests\Fixtures\App\DTO\Article:
-    attributes:
-        id:
-            groups:
-                - article.read
-                - article.write
-        title:
-            groups:
-                - article.read
-                - article.write
-        tags:
-            groups:
-                - article.read
-                - article.write
+  attributes:
+    id:
+      groups:
+        - article.read
+        - article.write
+    title:
+      groups:
+        - article.read
+        - article.write
+    tags:
+      groups:
+        - article.read
+        - article.write

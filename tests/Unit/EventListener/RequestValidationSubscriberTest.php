@@ -20,7 +20,7 @@ final class RequestValidationSubscriberTest extends TestCase
         $validation = ObjectMother::validation();
         $deserialized = new \stdClass();
         $event = ObjectMother::controllerEvent(
-            ObjectMother::deserializationRequest($deserialization, $validation, [$deserialization->getArgument() => $deserialized])
+            ObjectMother::deserializationRequest($deserialization, $validation, [$deserialization->argument => $deserialized])
         );
 
         $violations = ObjectMother::constraintViolationList();
@@ -28,7 +28,7 @@ final class RequestValidationSubscriberTest extends TestCase
         $validator
             ->expects(self::once())
             ->method('validate')
-            ->with($deserialized, null, $validation->getGroups())
+            ->with($deserialized, null, $validation->groups)
             ->willReturn($violations);
 
         $subscriber = new RequestValidationSubscriber($validator);
@@ -74,7 +74,7 @@ final class RequestValidationSubscriberTest extends TestCase
         $event = ObjectMother::controllerEvent(ObjectMother::deserializationRequest(
             ObjectMother::deserialization(),
             ObjectMother::validation(),
-            [ObjectMother::deserialization()->getArgument() => 'value']
+            [ObjectMother::deserialization()->argument => 'value']
         ));
         $controller = $event->getController();
 
@@ -98,7 +98,7 @@ final class RequestValidationSubscriberTest extends TestCase
                 ObjectMother::deserializationRequest(
                     ObjectMother::deserialization(),
                     null,
-                    [ObjectMother::deserialization()->getArgument() => 'value']
+                    [ObjectMother::deserialization()->argument => 'value']
                 )
             ],
             'Request without deserialized value' => [ObjectMother::deserializationRequest(ObjectMother::deserialization(), ObjectMother::validation())],

@@ -1,7 +1,8 @@
 framework:
-    test: true
-    secret: '%env(APP_SECRET)%'
-    annotations:
-        cache: php_array
-    router:
-        utf8: true
+  test: true
+  secret: '%env(APP_SECRET)%'
+  annotations:
+    cache: php_array
+  router:
+    utf8: true
+  assets: ~

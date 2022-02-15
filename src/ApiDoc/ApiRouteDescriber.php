@@ -2,11 +2,10 @@
 
 namespace Condenast\BasicApiBundle\ApiDoc;
 
-use Condenast\BasicApiBundle\Annotation\Deserialization;
-use Condenast\BasicApiBundle\Annotation\QueryParam;
-use Condenast\BasicApiBundle\Annotation\Resource;
-use Condenast\BasicApiBundle\Annotation\Validation;
-use Doctrine\Common\Annotations\Reader;
+use Condenast\BasicApiBundle\Attribute\Deserialization;
+use Condenast\BasicApiBundle\Attribute\QueryParam;
+use Condenast\BasicApiBundle\Attribute\Resource;
+use Condenast\BasicApiBundle\Attribute\Validation;
 use Nelmio\ApiDocBundle\Describer\ModelRegistryAwareInterface;
 use Nelmio\ApiDocBundle\Model\Model;
 use Nelmio\ApiDocBundle\Model\ModelRegistry;
@@ -14,6 +13,7 @@ use Nelmio\ApiDocBundle\OpenApiPhp\Util;
 use Nelmio\ApiDocBundle\RouteDescriber\RouteDescriberInterface;
 use Nelmio\ApiDocBundle\RouteDescriber\RouteDescriberTrait;
 use OpenApi\Annotations as OA;
+use OpenApi\Generator;
 use Symfony\Component\PropertyInfo\Type as PropertyInfoType;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -28,22 +28,13 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 {
     use RouteDescriberTrait;
 
-    /** @var Reader */
-    private $annotationReader;
-
-    /** @var ModelRegistry */
-    private $modelRegistry;
-
-    /** @var array<RouteCollection> */
-    private $routeCollections;
+    private ModelRegistry $modelRegistry;
 
     /**
      * @param array<RouteCollection> $routeCollections
      */
-    public function __construct(Reader $annotationReader, array $routeCollections)
+    public function __construct(private readonly array $routeCollections)
     {
-        $this->annotationReader = $annotationReader;
-        $this->routeCollections = $routeCollections;
     }
 
     public function setModelRegistry(ModelRegistry $modelRegistry): void
@@ -53,14 +44,13 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
     public function describe(OA\OpenApi $api, Route $route, \ReflectionMethod $reflectionMethod): void
     {
-        $resource = $this->annotationReader->getMethodAnnotation($reflectionMethod, Resource::class);
-        $deserialization = $this->annotationReader->getMethodAnnotation($reflectionMethod, Deserialization::class);
-        $validation = $this->annotationReader->getMethodAnnotation($reflectionMethod, Validation::class);
-        $queryParameters = \array_filter(
-            $this->annotationReader->getMethodAnnotations($reflectionMethod),
-            static function (object $annotation): bool {
-                return $annotation instanceof QueryParam;
-            }
+        $resource = ($reflectionMethod->getAttributes(Resource::class)[0] ?? null)?->newInstance();
+        $deserialization = ($reflectionMethod->getAttributes(Deserialization::class)[0] ?? null)?->newInstance();
+        $validation = ($reflectionMethod->getAttributes(Validation::class)[0] ?? null)?->newInstance();
+
+        $queryParameters = \array_map(
+            static fn (\ReflectionAttribute $attr) => $attr->newInstance(),
+            $reflectionMethod->getAttributes(QueryParam::class)
         );
 
         /** @psalm-suppress InternalMethod */
@@ -77,7 +67,7 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
         Util::merge(
             $operation,
             [
-                'tags' => [$resource->getName()],
+                'tags' => [$resource->name],
                 'operationId' => StringHelper::slugify($this->getRouteName($route).'-'.$operation->method),
             ]
         );
@@ -86,12 +76,12 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     private function describeRequestBody(OA\Operation $operation, Deserialization $deserialization): void
     {
         /** @var array<string> $groups */
-        $groups = (array) ($deserialization->getContext()['groups'] ?? []);
+        $groups = (array) ($deserialization->context['groups'] ?? []);
 
         /** @psalm-suppress ArgumentTypeCoercion */
         $this->describeMediaType(
             Util::getChild($operation, OA\RequestBody::class),
-            $deserialization->getType(),
+            $deserialization->type,
             $groups
         );
     }
@@ -120,24 +110,27 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
                 'query'
             );
 
-            Util::merge($parameter, ['description' => $this->extractDescription($queryParam) ?? OA\UNDEFINED]);
+            Util::merge($parameter, ['description' => $this->extractDescription($queryParam) ?? Generator::UNDEFINED]);
 
             /** @var OA\Schema $schema */
             $schema = Util::getChild($parameter, OA\Schema::class);
 
-            if (OA\UNDEFINED !== $schema->type || OA\UNDEFINED !== $schema->items || OA\UNDEFINED !== $schema->ref) {
+            /**
+             * @psalm-suppress RedundantConditionGivenDocblockType, DocblockTypeContradiction
+             */
+            if (Generator::UNDEFINED !== $schema->type || Generator::UNDEFINED !== $schema->items || Generator::UNDEFINED !== $schema->ref) {
                 continue;
             }
 
             $item = [
                 'type' => 'string',
-                'format' => $this->extractFormat($queryParam) ?? OA\UNDEFINED,
-                'default' => $queryParam->getDefault(),
-                'enum' => $this->extractEnum($queryParam->getConstraints()) ?? OA\UNDEFINED,
-                'pattern' => $this->extractPattern($queryParam->getConstraints()) ?? OA\UNDEFINED,
+                'format' => $this->extractFormat($queryParam) ?? Generator::UNDEFINED,
+                'default' => $queryParam->default,
+                'enum' => $this->extractEnum($queryParam->constraints) ?? Generator::UNDEFINED,
+                'pattern' => $this->extractPattern($queryParam->constraints) ?? Generator::UNDEFINED,
             ];
 
-            if ($queryParam->isArray()) {
+            if ($queryParam->isArray) {
                 $properties = [
                     'type' => 'array',
                     'items' => new OA\Items($item),
@@ -151,17 +144,19 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     }
 
     /**
-     * @param OA\RequestBody|OA\Response $body
      * @param array<string> $groups
      */
-    private function describeMediaType($body, string $type, array $groups = []): void
+    private function describeMediaType(OA\RequestBody|OA\Response $body, string $type, array $groups = []): void
     {
         /** @var OA\MediaType $mediaType */
         $mediaType = Util::getIndexedCollectionItem($body, OA\MediaType::class, 'application/json');
         /** @var OA\Schema $schema */
         $schema = Util::getChild($mediaType, OA\Schema::class);
 
-        if (OA\UNDEFINED !== $schema->type || OA\UNDEFINED !== $schema->items || OA\UNDEFINED !== $schema->ref) {
+        /**
+         * @psalm-suppress RedundantConditionGivenDocblockType, DocblockTypeContradiction
+         */
+        if (Generator::UNDEFINED !== $schema->type || Generator::UNDEFINED !== $schema->items || Generator::UNDEFINED !== $schema->ref) {
             return;
         }
 
@@ -230,15 +225,15 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     {
         $description = [];
 
-        if ('' !== $queryParam->getDescription()) {
-            $description[] = $queryParam->getDescription();
+        if ('' !== $queryParam->description) {
+            $description[] = $queryParam->description;
         }
 
         $requirements = \array_map(
             static function (string $desc): string {
                 return '* '.$desc;
             },
-            $this->extractRequirements($queryParam->getConstraints())
+            $this->extractRequirements($queryParam->constraints)
         );
 
         if (!empty($requirements)) {
@@ -296,13 +291,13 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
 
     public function extractFormat(QueryParam $queryParam): ?string
     {
-        if ('' !== $queryParam->getFormat()) {
-            return $queryParam->getFormat();
+        if ('' !== $queryParam->format) {
+            return $queryParam->format;
         }
 
         $format = null;
 
-        foreach ($queryParam->getConstraints() as $constraint) {
+        foreach ($queryParam->constraints as $constraint) {
             $title = StringHelper::toSentence((new \ReflectionClass($constraint))->getShortName());
 
             switch (true) {
@@ -353,6 +348,9 @@ class ApiRouteDescriber implements RouteDescriberInterface, ModelRegistryAwareIn
     private function getRouteName(Route $route): string
     {
         foreach ($this->routeCollections as $routeCollection) {
+            /**
+             * @var int|string $name
+             */
             foreach ($routeCollection->all() as $name => $collectionRoute) {
                 if ($collectionRoute === $route) {
                     return (string) $name;
